@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Reten HMI - Kemudahan & Peralatan</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            900: '#14532d',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .glass-card { background: white; border: 1px solid rgba(226, 232, 240, 0.8); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03); }
+        .table-container { scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent; }
+        .table-container::-webkit-scrollbar { height: 8px; }
+        .table-container::-webkit-scrollbar-track { background: transparent; }
+        .table-container::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 20px; }
+    </style>
+</head>
+<body class="text-gray-800 antialiased selection:bg-brand-100 selection:text-brand-900">
+
+    <!-- Navigation / Header -->
+    <nav class="bg-white border-b border-gray-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center gap-3">
+                    <div class="bg-brand-500 p-2 rounded-lg text-white">
+                        <i class="ph ph-mosque text-2xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold text-gray-900 leading-tight">Sistem Reten HMI</h1>
+                        <p class="text-xs text-gray-500 font-medium">Hospital Mesra Ibadah</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="hidden sm:block text-right">
+                        <p class="text-sm font-medium text-gray-900">SN Farihin</p>
+                        <p class="text-xs text-gray-500">Pegawai Bertanggungjawab</p>
+                    </div>
+                    <div class="h-10 w-10 rounded-full bg-gray-200 border-2 border-white shadow-sm flex items-center justify-center text-gray-500 font-bold overflow-hidden">
+                        <img src="https://placehold.co/100x100/e2e8f0/64748b?text=SN" alt="Profile" class="h-full w-full object-cover">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- Header Section -->
+        <div class="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-900">Dashboard Kemudahan & Peralatan</h2>
+                <p class="text-gray-500 mt-1">Laporan tahunan prestasi dan kelengkapan wad (Jan - Dis 2025)</p>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="fetchTabList()" class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm flex items-center gap-2">
+                    <i class="ph ph-arrows-clockwise"></i> Segar Semula
+                </button>
+                <button class="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm flex items-center gap-2">
+                    <i class="ph ph-download-simple"></i> Muat Turun PDF
+                </button>
+            </div>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="glass-card rounded-2xl p-6 relative overflow-hidden group">
+                <div class="absolute -right-6 -top-6 bg-blue-50 h-32 w-32 rounded-full transition-transform group-hover:scale-110 opacity-50"></div>
+                <div class="relative z-10 flex justify-between items-start">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500 mb-1">Status Keseluruhan</p>
+                        <h3 class="text-3xl font-bold text-gray-900">90%</h3>
+                        <p class="text-xs text-brand-600 font-medium flex items-center gap-1 mt-2">
+                            <i class="ph-bold ph-trend-up"></i> Stabil sejak bulan lalu
+                        </p>
+                    </div>
+                    <div class="bg-blue-100 p-3 rounded-xl text-blue-600">
+                        <i class="ph ph-chart-pie-slice text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-card rounded-2xl p-6 relative overflow-hidden group">
+                <div class="absolute -right-6 -top-6 bg-brand-50 h-32 w-32 rounded-full transition-transform group-hover:scale-110 opacity-50"></div>
+                <div class="relative z-10 flex justify-between items-start">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500 mb-1">Kemudahan Disediakan</p>
+                        <h3 class="text-3xl font-bold text-gray-900">10/10</h3>
+                        <p class="text-xs text-brand-600 font-medium flex items-center gap-1 mt-2">
+                            <i class="ph-bold ph-check-circle"></i> Memenuhi spesifikasi HMI
+                        </p>
+                    </div>
+                    <div class="bg-brand-100 p-3 rounded-xl text-brand-600">
+                        <i class="ph ph-list-checks text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-card rounded-2xl p-6 relative overflow-hidden group">
+                <div class="absolute -right-6 -top-6 bg-amber-50 h-32 w-32 rounded-full transition-transform group-hover:scale-110 opacity-50"></div>
+                <div class="relative z-10 flex justify-between items-start">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500 mb-1">Maklum Balas / Pembaikan</p>
+                        <h3 class="text-3xl font-bold text-gray-900">0</h3>
+                        <p class="text-xs text-amber-600 font-medium flex items-center gap-1 mt-2">
+                            <i class="ph-bold ph-warning-circle"></i> Tiada tindakan diperlukan
+                        </p>
+                    </div>
+                    <div class="bg-amber-100 p-3 rounded-xl text-amber-600">
+                        <i class="ph ph-wrench text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Data Table Container -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 mb-8">
+            
+            <!-- Table Header & Dropdown Control -->
+            <div class="px-6 py-5 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gray-50/50 rounded-t-xl">
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-800">Senarai Reten Semasa</h2>
+                    <p class="text-sm text-gray-500 mt-1">Sila pilih kategori (tab) untuk memaparkan data.</p>
+                </div>
+                
+                <div class="w-full sm:w-72 relative">
+                    <label for="tabSelector" class="sr-only">Pilih Tab</label>
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="ph ph-folder text-gray-400"></i>
+                    </div>
+                    <select id="tabSelector" class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-brand-500 focus:border-brand-500 block w-full pl-10 p-2.5 shadow-sm transition-colors cursor-pointer appearance-none" disabled>
+                        <option value="">Memuatkan senarai...</option>
+                    </select>
+                    <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                        <i class="ph ph-caret-down text-gray-500"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Table Wrapper (Scrollable) -->
+            <div class="overflow-x-auto table-container">
+                <table class="w-full text-sm text-left text-gray-600">
+                    <thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b border-gray-200">
+                        <tr id="tableHeaderRow">
+                            <th scope="col" class="px-6 py-4 font-semibold w-1/4">Perkara / Item</th>
+                            <th scope="col" class="px-4 py-4 text-center font-semibold whitespace-nowrap">Jan</th>
+                            <th scope="col" class="px-4 py-4 text-center font-semibold whitespace-nowrap">Feb</th>
+                            <th scope="col" class="px-4 py-4 text-center font-semibold whitespace-nowrap">Mac</th>
+                            <th scope="col" class="px-4 py-4 text-center font-semibold whitespace-nowrap">Apr</th>
+                            <th scope="col" class="px-4 py-4 text-center font-semibold whitespace-nowrap">Mei</th>
+                            <th scope="col" class="px-4 py-4 text-center font-semibold whitespace-nowrap">Jun</th>
+                            <th scope="col" class="px-4 py-4 text-center font-semibold whitespace-nowrap">Jul</th>
+                            <th scope="col" class="px-4 py-4 text-center font-semibold whitespace-nowrap">Ogo</th>
+                            <th scope="col" class="px-4 py-4 text-center font-semibold whitespace-nowrap">Sep</th>
+                            <th scope="col" class="px-4 py-4 text-center font-semibold whitespace-nowrap">Okt</th>
+                            <th scope="col" class="px-4 py-4 text-center font-semibold whitespace-nowrap">Nov</th>
+                            <th scope="col" class="px-4 py-4 text-center font-semibold whitespace-nowrap">Dis</th>
+                        </tr>
+                    </thead>
+                    <tbody id="wardTableBody" class="divide-y divide-gray-100">
+                        <!-- Data will be populated here via JavaScript -->
+                        <tr>
+                            <td colspan="13" class="px-6 py-12 text-center text-gray-500">
+                                <i class="ph ph-spinner-gap animate-spin text-4xl text-brand-500 mb-3 inline-block"></i>
+                                <p class="font-medium text-gray-600">Menyambung ke Pangkalan Data...</p>
+                                <p class="text-xs text-gray-400 mt-1">Sila tunggu sebentar.</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-xl flex justify-between items-center text-xs text-gray-500">
+                <div class="flex items-center gap-4">
+                    <span class="flex items-center gap-1"><i class="ph-fill ph-check-circle text-green-500 text-base"></i> Ada / Lengkap ( / )</span>
+                    <span class="flex items-center gap-1"><i class="ph-fill ph-x-circle text-red-500 text-base"></i> Tiada / Kosong ( - )</span>
+                </div>
+                <p>Sumber Data: Google Sheets Auto-Sync</p>
+            </div>
+        </div>
+
+        <!-- Analytics Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
+            <!-- Line Chart: Monthly Trend -->
+            <div class="glass-card rounded-xl p-6">
+                <div class="mb-4">
+                    <h3 class="text-lg font-bold text-gray-800">Prestasi Kemudahan Tahunan</h3>
+                    <p class="text-xs text-gray-500">Peratusan kumulatif pencapaian HMI setiap bulan</p>
+                </div>
+                <div class="relative h-64 w-full">
+                    <canvas id="monthlyTrendChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Empty State for future specific module -->
+            <div class="glass-card rounded-xl p-6 flex flex-col items-center justify-center text-center border-dashed border-2 border-gray-300 bg-gray-50/50">
+                <div class="bg-gray-100 p-4 rounded-full mb-4 text-gray-400">
+                    <i class="ph ph-chart-bar text-4xl"></i>
+                </div>
+                <h3 class="text-lg font-bold text-gray-700 mb-1">Analisis Terperinci Ruang Solat</h3>
+                <p class="text-sm text-gray-500 max-w-sm mb-4">Modul visualisasi kerosakan kelengkapan sedang dalam pembangunan. Akan datang dalam kemaskini V2.</p>
+                <button disabled class="bg-gray-200 text-gray-400 px-4 py-2 rounded-lg text-sm font-medium cursor-not-allowed">
+                    Akan Datang
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            
+            // =================================================================
+            // URL APP SCRIPT ANDA YANG TERBAHARU
+            const API_URL = 'https://script.google.com/macros/s/AKfycbzUhwvuE6anpsgxRMs8hGGjzw2Sv0YFYYgcCa9x-XfpSERma_J0y6uo0F3jSTFI6gqsDA/exec';
+            // =================================================================
+
+            // Global Chart Instance
+            let monthlyTrendChartInstance = null;
+            
+            // Render Dummy Chart Initially
+            renderChart([90,90,90,90,90,90,90,90,90,90,90,90]);
+
+            // Utility Function: Interpret Status
+            // Menukar data text ( / atau - ) menjadi HTML ikon yang cantik
+            function interpretStatus(value) {
+                if (value === undefined || value === null) return `<span class="text-gray-300">-</span>`;
+                
+                const valStr = value.toString().trim().toLowerCase();
+                
+                // Simbol '/' atau 'ada' atau '1' = Hijau
+                if (valStr === '/' || valStr === 'ada' || valStr === '1' || valStr === 'ya') {
+                    return `<div class="flex justify-center"><i class="ph-fill ph-check-circle text-green-500 text-xl drop-shadow-sm" title="Ada / Lengkap"></i></div>`;
+                } 
+                // Simbol '-' atau 'tiada' atau '0' atau kosong = Merah
+                else if (valStr === '-' || valStr === 'tiada' || valStr === '0' || valStr === 'tidak' || valStr === '') {
+                    return `<div class="flex justify-center"><i class="ph-fill ph-x-circle text-red-400 text-xl drop-shadow-sm" title="Tiada / Kosong"></i></div>`;
+                }
+                // Jika data adalah nombor biasa atau tulisan lain (contoh: 90%), papar as text
+                else {
+                    return `<span class="font-medium text-gray-700">${value}</span>`;
+                }
+            }
+
+            // Fungsi Utama 1: Ambil Senarai Tab
+            async function fetchTabList() {
+                const tabSelector = document.getElementById('tabSelector');
+                const tbody = document.getElementById('wardTableBody');
+                
+                tabSelector.innerHTML = '<option value="">Sedang mencari senarai tab...</option>';
+                tabSelector.disabled = true;
+                
+                try {
+                    console.log("Menghubungi API untuk senarai tab...");
+                    const response = await fetch(`${API_URL}?action=getTabs`, {
+                        method: 'GET',
+                        mode: 'cors'
+                    });
+                    
+                    if (!response.ok) throw new Error(`Network response was not ok (${response.status})`);
+                    
+                    const result = await response.json();
+                    console.log("Senarai Tab Diterima:", result);
+                    
+                    if (result.status === 'success' && result.tabs) {
+                        tabSelector.innerHTML = ''; // Kosongkan senarai lama
+                        
+                        // Masukkan nama tab ke dalam dropdown
+                        result.tabs.forEach(tabName => {
+                            const option = document.createElement('option');
+                            option.value = tabName;
+                            option.textContent = tabName;
+                            tabSelector.appendChild(option);
+                        });
+                        
+                        tabSelector.disabled = false;
+                        
+                        // Tarik data tab pertama
+                        if(result.tabs.length > 0) {
+                            fetchSheetData(result.tabs[0]);
+                        }
+                        
+                        // Bila pengguna pilih tab lain
+                        tabSelector.addEventListener('change', function() {
+                            fetchSheetData(this.value);
+                        });
+                        
+                    } else {
+                        throw new Error(result.message || "Gagal mendapatkan array tab.");
+                    }
+                    
+                } catch(error) {
+                    console.error("Ralat List Tab:", error);
+                    tabSelector.innerHTML = '<option value="">Gagal - Ralat Pelayan</option>';
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="13" class="px-6 py-10">
+                                <div class="bg-red-50 border border-red-200 rounded-lg p-4 flex flex-col items-center justify-center text-center">
+                                    <i class="ph ph-warning-octagon text-4xl text-red-500 mb-2"></i>
+                                    <h4 class="font-bold text-red-800">Gagal Mengambil Senarai Tab</h4>
+                                    <p class="text-sm text-red-600 mt-1 max-w-lg">
+                                        Periksa tetapan Apps Script anda. Pastikan anda telah buat <b>Deploy > New version</b>.
+                                    </p>
+                                    <div class="mt-3 p-2 bg-red-100 rounded text-xs text-red-900 font-mono w-full overflow-x-auto text-left">
+                                        ${error.message || error.toString()}
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>`;
+                }
+            }
+
+            // Fungsi Utama 2: Ambil Data Tab Tertentu
+            async function fetchSheetData(tabName) {
+                const tbody = document.getElementById('wardTableBody');
+                const theadRow = document.getElementById('tableHeaderRow');
+                
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="13" class="px-6 py-12 text-center text-gray-500">
+                            <i class="ph ph-arrows-clockwise animate-spin text-4xl text-brand-500 mb-3 inline-block"></i>
+                            <p class="font-medium text-gray-600">Menarik data dari tab [ ${tabName} ] ...</p>
+                        </td>
+                    </tr>
+                `;
+                
+                try {
+                    const fetchUrl = `${API_URL}?tabName=${encodeURIComponent(tabName)}`;
+                    console.log("Menarik data jadual dari:", fetchUrl);
+                    
+                    const response = await fetch(fetchUrl, {
+                        method: 'GET',
+                        mode: 'cors'
+                    });
+                    
+                    if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+                    
+                    const result = await response.json();
+                    console.log("Data Jadual Diterima:", result);
+                    
+                    if (result.status === 'success') {
+                        // 1. KEMASKINI HEADER JADUAL (Berdasarkan data sebenar)
+                        if (result.data.length > 0) {
+                            const firstRowObj = result.data[0];
+                            const headerKeys = Object.keys(firstRowObj);
+                            
+                            let headerHTML = '';
+                            headerKeys.forEach((key, index) => {
+                                // Kolum pertama (Perkara) lebih lebar dan align kiri
+                                if (index === 0) {
+                                    headerHTML += `<th scope="col" class="px-6 py-4 font-semibold text-left w-1/3">${key.replace(/_/g, ' ')}</th>`;
+                                } else {
+                                    // Kolum bulan align tengah
+                                    headerHTML += `<th scope="col" class="px-4 py-4 text-center font-semibold whitespace-nowrap">${key}</th>`;
+                                }
+                            });
+                            theadRow.innerHTML = headerHTML;
+                            
+                            // 2. KEMASKINI BODY JADUAL
+                            tbody.innerHTML = '';
+                            result.data.forEach((row, rowIndex) => {
+                                const tr = document.createElement('tr');
+                                // Efek hover dan border
+                                tr.className = "hover:bg-brand-50/50 transition-colors border-b border-gray-50 last:border-0";
+                                
+                                let tdHTML = '';
+                                headerKeys.forEach((key, colIndex) => {
+                                    const cellData = row[key];
+                                    
+                                    if (colIndex === 0) {
+                                        // Lajur Perkara (Kiri)
+                                        tdHTML += `<td class="px-6 py-4 font-medium text-gray-900">${cellData || '-'}</td>`;
+                                    } else {
+                                        // Lajur Bulan (Tengah + Interpret Simbol)
+                                        tdHTML += `<td class="px-4 py-3 align-middle text-center">${interpretStatus(cellData)}</td>`;
+                                    }
+                                });
+                                tr.innerHTML = tdHTML;
+                                tbody.appendChild(tr);
+                            });
+                            
+                            // (Pilihan) Cuba update chart jika ada baris Peratusan
+                            updateChartIfPercentageExists(result.data, headerKeys);
+                            
+                        } else {
+                             tbody.innerHTML = `<tr><td colspan="13" class="px-6 py-8 text-center text-gray-500">Jadual dijumpai tetapi tiada rekod data di dalamnya.</td></tr>`;
+                        }
+                    } else {
+                        throw new Error(result.message || "Pelayan memulangkan ralat.");
+                    }
+                    
+                } catch(error) {
+                    console.error("Ralat Tarik Data Tab:", error);
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="13" class="px-6 py-10">
+                                <div class="bg-red-50 border border-red-200 rounded-lg p-4 flex flex-col items-center text-center">
+                                    <i class="ph ph-bug text-4xl text-red-500 mb-2"></i>
+                                    <h4 class="font-bold text-red-800">Ralat Semasa Membaca Tab</h4>
+                                    <p class="text-sm text-red-600 mt-1">Sistem gagal membaca format jadual dalam tab <b>${tabName}</b>.</p>
+                                    <div class="mt-3 p-2 bg-red-100 rounded text-xs text-red-900 font-mono text-left w-full max-w-2xl overflow-x-auto">
+                                        ${error.message || error.toString()}
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>`;
+                }
+            }
+
+            // Fungsi untuk Chart
+            function renderChart(dataArr) {
+                const ctx = document.getElementById('monthlyTrendChart').getContext('2d');
+                
+                if(monthlyTrendChartInstance) {
+                    monthlyTrendChartInstance.destroy();
+                }
+
+                monthlyTrendChartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Jan', 'Feb', 'Mac', 'Apr', 'Mei', 'Jun', 'Jul', 'Ogo', 'Sep', 'Okt', 'Nov', 'Dis'],
+                        datasets: [{
+                            label: 'Pencapaian (%)',
+                            data: dataArr,
+                            borderColor: '#22c55e',
+                            backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                            borderWidth: 2,
+                            pointBackgroundColor: '#fff',
+                            pointBorderColor: '#22c55e',
+                            pointBorderWidth: 2,
+                            pointRadius: 4,
+                            pointHoverRadius: 6,
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                backgroundColor: '#1f2937',
+                                padding: 10,
+                                callbacks: { label: (context) => `${context.parsed.y}%` }
+                            }
+                        },
+                        scales: {
+                            y: { 
+                                beginAtZero: true, 
+                                max: 100,
+                                grid: { color: '#f1f5f9', drawBorder: false },
+                                ticks: { font: { family: 'Inter' }, color: '#94a3b8', stepSize: 20 }
+                            },
+                            x: {
+                                grid: { display: false, drawBorder: false },
+                                ticks: { font: { family: 'Inter' }, color: '#64748b' }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Cuba cari peratusan secara dinamik
+            function updateChartIfPercentageExists(dataArray, headers) {
+                // Cari baris yang ada perkataan "peratus" di kolum pertama
+                const percentRow = dataArray.find(row => {
+                    const firstCol = row[headers[0]];
+                    return firstCol && typeof firstCol === 'string' && firstCol.toLowerCase().includes('peratus');
+                });
+
+                if (percentRow) {
+                    let chartData = [];
+                    // Mula baca dari index 1 (Jan) hingga 12 (Dis)
+                    for (let i = 1; i <= 12; i++) {
+                        if (headers[i]) {
+                            let valStr = percentRow[headers[i]];
+                            // Buang simbol % jika ada, convert to float
+                            let num = parseFloat(valStr.replace('%', '').trim());
+                            chartData.push(isNaN(num) ? null : num);
+                        } else {
+                            chartData.push(null);
+                        }
+                    }
+                    renderChart(chartData);
+                } else {
+                    // Reset to generic if not found
+                    renderChart([0,0,0,0,0,0,0,0,0,0,0,0]);
+                }
+            }
+
+            // --- Panggil Fungsi Pertama Kali Muka Surat Dibuka ---
+            // Letak dalam object global supaya button manual refresh boleh panggil
+            window.fetchTabList = fetchTabList;
+            
+            // Execute on load
+            fetchTabList();
+
+        });
+    </script>
+</body>
+</html>
