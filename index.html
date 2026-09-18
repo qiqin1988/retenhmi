@@ -34,12 +34,21 @@
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
-        .glass-card { background: white; border: 1px solid rgba(226, 232, 240, 0.8); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03); }
-        .table-container { scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent; }
-        .table-container::-webkit-scrollbar { height: 8px; }
-        .table-container::-webkit-scrollbar-track { background: transparent; }
-        .table-container::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 20px; }
+        body { font-family: 'Inter', sans-serif; background: #f4f7f6; }
+        .dashboard-heading, .brand-heading { font-family: 'Poppins', sans-serif; }
+        .glass-card { background: rgba(255,255,255,.97); border:1px solid #e5e7eb; box-shadow:0 10px 30px rgba(15,23,42,.06); }
+        .hero-card { background:linear-gradient(135deg,#0f8f4f 0%,#16a34a 55%,#22c55e 100%); box-shadow:0 16px 35px rgba(22,163,74,.18); }
+        .kpi-card { transition:transform .2s ease,box-shadow .2s ease; }
+        .kpi-card:hover { transform:translateY(-3px); box-shadow:0 14px 28px rgba(15,23,42,.08); }
+        .tab-select { transition:all .2s ease; }
+        .table-container { scrollbar-width:thin; scrollbar-color:#cbd5e1 transparent; }
+        .table-container::-webkit-scrollbar { height:8px; width:8px; }
+        .table-container::-webkit-scrollbar-track { background:transparent; }
+        .table-container::-webkit-scrollbar-thumb { background:#cbd5e1; border-radius:20px; }
+        .table-container table { min-width:760px; }
+        .table-container thead th { position:sticky; top:0; z-index:2; background:#f8fafc; }
+        .section-label { letter-spacing:.08em; font-size:.68rem; font-weight:700; text-transform:uppercase; color:#64748b; }
+        .soft-divider { border-color:#eef2f7; }
     </style>
 </head>
 <body class="text-gray-800 antialiased selection:bg-brand-100 selection:text-brand-900">
@@ -53,7 +62,7 @@
                         <i class="ph ph-mosque text-2xl"></i>
                     </div>
                     <div>
-                        <h1 class="text-xl font-bold text-gray-900 leading-tight">Sistem Reten HMI</h1>
+                        <h1 class="brand-heading text-xl font-bold text-gray-900 leading-tight">Sistem Reten HMI</h1>
                         <p class="text-xs text-gray-500 font-medium">Hospital Mesra Ibadah</p>
                     </div>
                 </div>
@@ -75,8 +84,8 @@
         <!-- Header Section -->
         <div class="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
             <div>
-                <h2 class="text-2xl font-bold text-gray-900">Dashboard Kemudahan & Peralatan</h2>
-                <p class="text-gray-500 mt-1">Laporan tahunan prestasi dan kelengkapan wad (Jan - Dis 2025)</p>
+                <div class="flex items-center gap-3 mb-2"><span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-50 text-green-700 text-xs font-bold"><i class="ph-fill ph-shield-check"></i> RETEN HMI</span><span class="text-xs font-semibold text-gray-400">2026</span></div><h2 class="dashboard-heading text-3xl font-bold text-gray-900">Kemudahan & Peralatan</h2>
+                <p class="text-gray-500 mt-1">Laporan pemantauan Hospital Mesra Ibadah • Tahun 2026</p>
             </div>
             <div class="flex gap-2">
                 <button onclick="fetchTabList()" class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm flex items-center gap-2">
@@ -89,53 +98,22 @@
         </div>
 
         <!-- KPI Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div class="glass-card rounded-2xl p-6 relative overflow-hidden group">
-                <div class="absolute -right-6 -top-6 bg-blue-50 h-32 w-32 rounded-full transition-transform group-hover:scale-110 opacity-50"></div>
-                <div class="relative z-10 flex justify-between items-start">
-                    <div>
-                        <p class="text-sm font-medium text-gray-500 mb-1">Status Keseluruhan</p>
-                        <h3 class="text-3xl font-bold text-gray-900">90%</h3>
-                        <p class="text-xs text-brand-600 font-medium flex items-center gap-1 mt-2">
-                            <i class="ph-bold ph-trend-up"></i> Stabil sejak bulan lalu
-                        </p>
-                    </div>
-                    <div class="bg-blue-100 p-3 rounded-xl text-blue-600">
-                        <i class="ph ph-chart-pie-slice text-2xl"></i>
-                    </div>
-                </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div class="glass-card kpi-card rounded-2xl p-5">
+                <div class="flex items-center justify-between mb-5"><div class="w-11 h-11 rounded-xl bg-green-50 text-green-600 flex items-center justify-center"><i class="ph ph-folders text-2xl"></i></div><span class="text-xs font-semibold text-gray-400">KATEGORI</span></div>
+                <p class="text-sm text-gray-500">Kategori Reten</p><h3 id="kpiTabs" class="dashboard-heading text-3xl font-bold text-gray-900 mt-1">—</h3><p class="text-xs text-gray-400 mt-2">Tab yang diselaraskan</p>
             </div>
-
-            <div class="glass-card rounded-2xl p-6 relative overflow-hidden group">
-                <div class="absolute -right-6 -top-6 bg-brand-50 h-32 w-32 rounded-full transition-transform group-hover:scale-110 opacity-50"></div>
-                <div class="relative z-10 flex justify-between items-start">
-                    <div>
-                        <p class="text-sm font-medium text-gray-500 mb-1">Kemudahan Disediakan</p>
-                        <h3 class="text-3xl font-bold text-gray-900">10/10</h3>
-                        <p class="text-xs text-brand-600 font-medium flex items-center gap-1 mt-2">
-                            <i class="ph-bold ph-check-circle"></i> Memenuhi spesifikasi HMI
-                        </p>
-                    </div>
-                    <div class="bg-brand-100 p-3 rounded-xl text-brand-600">
-                        <i class="ph ph-list-checks text-2xl"></i>
-                    </div>
-                </div>
+            <div class="glass-card kpi-card rounded-2xl p-5">
+                <div class="flex items-center justify-between mb-5"><div class="w-11 h-11 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center"><i class="ph ph-database text-2xl"></i></div><span class="text-xs font-semibold text-gray-400">DATA</span></div>
+                <p class="text-sm text-gray-500">Jumlah Rekod</p><h3 id="kpiRows" class="dashboard-heading text-3xl font-bold text-gray-900 mt-1">—</h3><p class="text-xs text-gray-400 mt-2">Keseluruhan kategori</p>
             </div>
-
-            <div class="glass-card rounded-2xl p-6 relative overflow-hidden group">
-                <div class="absolute -right-6 -top-6 bg-amber-50 h-32 w-32 rounded-full transition-transform group-hover:scale-110 opacity-50"></div>
-                <div class="relative z-10 flex justify-between items-start">
-                    <div>
-                        <p class="text-sm font-medium text-gray-500 mb-1">Maklum Balas / Pembaikan</p>
-                        <h3 class="text-3xl font-bold text-gray-900">0</h3>
-                        <p class="text-xs text-amber-600 font-medium flex items-center gap-1 mt-2">
-                            <i class="ph-bold ph-warning-circle"></i> Tiada tindakan diperlukan
-                        </p>
-                    </div>
-                    <div class="bg-amber-100 p-3 rounded-xl text-amber-600">
-                        <i class="ph ph-wrench text-2xl"></i>
-                    </div>
-                </div>
+            <div class="glass-card kpi-card rounded-2xl p-5">
+                <div class="flex items-center justify-between mb-5"><div class="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center"><i class="ph ph-table text-2xl"></i></div><span class="text-xs font-semibold text-gray-400">PAPARAN</span></div>
+                <p class="text-sm text-gray-500">Rekod Tab Dipilih</p><h3 id="kpiCurrentRows" class="dashboard-heading text-3xl font-bold text-gray-900 mt-1">—</h3><p id="kpiCurrentLabel" class="text-xs text-gray-400 mt-2">Pilih kategori</p>
+            </div>
+            <div class="hero-card kpi-card rounded-2xl p-5 text-white">
+                <div class="flex items-center justify-between mb-5"><div class="w-11 h-11 rounded-xl bg-white/15 flex items-center justify-center"><i class="ph ph-cloud-check text-2xl"></i></div><span class="text-xs font-semibold text-white/70">STATUS</span></div>
+                <p class="text-sm text-white/80">Sambungan Data</p><h3 class="dashboard-heading text-2xl font-bold mt-1">LIVE</h3><p class="text-xs text-white/75 mt-2 flex items-center gap-1"><i class="ph-fill ph-check-circle"></i> Google Sheets Auto-Sync</p>
             </div>
         </div>
 
@@ -145,8 +123,8 @@
             <!-- Table Header & Dropdown Control -->
             <div class="px-6 py-5 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gray-50/50 rounded-t-xl">
                 <div>
-                    <h2 class="text-lg font-semibold text-gray-800">Senarai Reten Semasa</h2>
-                    <p class="text-sm text-gray-500 mt-1">Sila pilih kategori (tab) untuk memaparkan data.</p>
+                    <div class="flex items-center gap-2"><div class="w-9 h-9 rounded-lg bg-green-50 text-green-600 flex items-center justify-center"><i class="ph ph-list-dashes text-xl"></i></div><div><p class="section-label">Data Operasi</p><h2 class="dashboard-heading text-lg font-bold text-gray-900">Senarai Reten</h2></div></div>
+                    <p class="text-sm text-gray-500 mt-2">Pilih kategori untuk melihat data penuh yang diselaraskan terus daripada Google Sheets.</p>
                 </div>
                 
                 <div class="w-full sm:w-72 relative">
@@ -154,7 +132,7 @@
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <i class="ph ph-folder text-gray-400"></i>
                     </div>
-                    <select id="tabSelector" class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-brand-500 focus:border-brand-500 block w-full pl-10 p-2.5 shadow-sm transition-colors cursor-pointer appearance-none" disabled>
+                    <select id="tabSelector" class="tab-select bg-white border border-gray-200 text-gray-900 text-sm rounded-xl focus:ring-green-500 focus:border-green-500 block w-full pl-10 pr-10 p-3 shadow-sm cursor-pointer appearance-none" disabled>
                         <option value="">Memuatkan senarai...</option>
                     </select>
                     <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
@@ -196,12 +174,12 @@
                 </table>
             </div>
             
-            <div class="px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-xl flex justify-between items-center text-xs text-gray-500">
+            <div class="px-6 py-4 border-t soft-divider bg-gray-50/70 rounded-b-xl flex flex-col sm:flex-row gap-3 justify-between items-center text-xs text-gray-500"><p id="tableSummary" class="font-medium text-gray-500">Memuatkan ringkasan data...</p><div class="flex items-center gap-4">
                 <div class="flex items-center gap-4">
                     <span class="flex items-center gap-1"><i class="ph-fill ph-check-circle text-green-500 text-base"></i> Ada / Lengkap ( / )</span>
                     <span class="flex items-center gap-1"><i class="ph-fill ph-x-circle text-red-500 text-base"></i> Tiada / Kosong ( - )</span>
                 </div>
-                <p>Sumber Data: Google Sheets Auto-Sync</p>
+                <p class="flex items-center gap-1"><i class="ph-fill ph-cloud-arrow-down text-green-500"></i> Google Sheets Auto-Sync</p>
             </div>
         </div>
 
@@ -218,11 +196,18 @@
                 </div>
             </div>
 
-            <!-- Empty State for future specific module -->
-            <div class="glass-card rounded-xl p-6 flex flex-col items-center justify-center text-center border-dashed border-2 border-gray-300 bg-gray-50/50">
-                <div class="bg-gray-100 p-4 rounded-full mb-4 text-gray-400">
-                    <i class="ph ph-chart-bar text-4xl"></i>
+            <!-- Selected Tab Summary -->
+            <div class="glass-card rounded-2xl p-6">
+                <div class="flex items-start justify-between gap-4 mb-5">
+                    <div><p class="section-label mb-1">Ringkasan</p><h3 id="summaryTitle" class="dashboard-heading text-xl font-bold text-gray-900">Kategori Dipilih</h3><p id="summarySubtitle" class="text-sm text-gray-500 mt-1">Maklumat data akan dipaparkan di sini.</p></div>
+                    <div class="w-11 h-11 rounded-xl bg-green-50 text-green-600 flex items-center justify-center"><i class="ph ph-chart-bar text-2xl"></i></div>
                 </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="rounded-xl bg-gray-50 border border-gray-100 p-4"><p class="text-xs text-gray-400">Baris</p><p id="summaryRows" class="text-xl font-bold text-gray-900 mt-1">—</p></div>
+                    <div class="rounded-xl bg-gray-50 border border-gray-100 p-4"><p class="text-xs text-gray-400">Kolum</p><p id="summaryCols" class="text-xl font-bold text-gray-900 mt-1">—</p></div>
+                </div>
+                <div class="mt-4 rounded-xl border border-green-100 bg-green-50/60 p-4 flex gap-3"><i class="ph-fill ph-info text-green-600 text-xl mt-0.5"></i><p class="text-xs leading-5 text-gray-600">Data yang dipaparkan ialah keseluruhan kandungan tab yang diterima daripada Google Sheets.</p></div>
+            </div>      </div>
                 <h3 class="text-lg font-bold text-gray-700 mb-1">Analisis Terperinci Ruang Solat</h3>
                 <p class="text-sm text-gray-500 max-w-sm mb-4">Modul visualisasi kerosakan kelengkapan sedang dalam pembangunan. Akan datang dalam kemaskini V2.</p>
                 <button disabled class="bg-gray-200 text-gray-400 px-4 py-2 rounded-lg text-sm font-medium cursor-not-allowed">
@@ -339,6 +324,11 @@
                     }
 
                     allHMIData = result.data;
+
+                    const kpiTabs = document.getElementById('kpiTabs');
+                    const kpiRows = document.getElementById('kpiRows');
+                    if (kpiTabs) kpiTabs.textContent = allHMIData.length;
+                    if (kpiRows) kpiRows.textContent = allHMIData.reduce((sum, item) => sum + (Number(item.rows) || 0), 0);
 
                     tabSelector.innerHTML = '';
 
@@ -460,6 +450,20 @@
                     tableSummary.textContent =
                         `${rows.length} baris • ${maxCols} kolum • ${escapeHTML(tabName)} • Data penuh`;
                 }
+
+                const kpiCurrentRows = document.getElementById('kpiCurrentRows');
+                const kpiCurrentLabel = document.getElementById('kpiCurrentLabel');
+                const summaryTitle = document.getElementById('summaryTitle');
+                const summarySubtitle = document.getElementById('summarySubtitle');
+                const summaryRows = document.getElementById('summaryRows');
+                const summaryCols = document.getElementById('summaryCols');
+
+                if (kpiCurrentRows) kpiCurrentRows.textContent = rows.length;
+                if (kpiCurrentLabel) kpiCurrentLabel.textContent = tabName;
+                if (summaryTitle) summaryTitle.textContent = tabName;
+                if (summarySubtitle) summarySubtitle.textContent = 'Data penuh daripada Google Sheets';
+                if (summaryRows) summaryRows.textContent = rows.length;
+                if (summaryCols) summaryCols.textContent = maxCols;
 
                 // Cuba cari baris peratus untuk chart.
                 const percentIndex = rows.findIndex(row =>
