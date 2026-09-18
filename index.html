@@ -319,157 +319,170 @@
                 });
             }
 
+            // Simpan semua data sekali sahaja supaya tab tidak perlu
+            // memanggil Apps Script berulang kali.
+            let allHMIData = [];
+
             async function fetchTabList() {
                 const tabSelector = document.getElementById('tabSelector');
                 const tbody = document.getElementById('wardTableBody');
 
-                tabSelector.innerHTML = '<option value="">Memuatkan senarai tab...</option>';
+                tabSelector.innerHTML = '<option value="">Memuatkan data HMI...</option>';
                 tabSelector.disabled = true;
 
                 try {
-                    const result = await callAPI({ action: 'getTabs' });
+                    // Ambil SEMUA 6 tab dalam satu panggilan API.
+                    const result = await callAPI({ action: 'getAll' });
 
-                    if (result.success && Array.isArray(result.tabs)) {
-                        tabSelector.innerHTML = '';
-
-                        result.tabs.forEach(tabName => {
-                            const option = document.createElement('option');
-                            option.value = tabName;
-                            option.textContent = tabName;
-                            tabSelector.appendChild(option);
-                        });
-
-                        tabSelector.disabled = false;
-
-                        if (result.tabs.length > 0) {
-                            await fetchSheetData(result.tabs[0]);
-                        }
-
-                        tabSelector.onchange = function() {
-                            fetchSheetData(this.value);
-                        };
-                    } else {
-                        throw new Error(result.error || 'Gagal mendapatkan senarai tab.');
+                    if (!result.success || !Array.isArray(result.data)) {
+                        throw new Error(result.error || 'Data HMI tidak dapat dibaca.');
                     }
 
+                    allHMIData = result.data;
+
+                    tabSelector.innerHTML = '';
+
+                    allHMIData.forEach(item => {
+                        const option = document.createElement('option');
+                        option.value = item.sheet;
+                        option.textContent = item.sheet;
+                        tabSelector.appendChild(option);
+                    });
+
+                    tabSelector.disabled = allHMIData.length === 0;
+
+                    if (allHMIData.length > 0) {
+                        renderSheetData(allHMIData[0]);
+                    } else {
+                        tbody.innerHTML = '<tr><td colspan="13" class="px-6 py-8 text-center text-gray-500">Tiada data ditemui.</td></tr>';
+                    }
+
+                    tabSelector.onchange = function() {
+                        const selected = allHMIData.find(item => item.sheet === this.value);
+                        if (selected) renderSheetData(selected);
+                    };
+
                 } catch (error) {
-                    console.error('Ralat List Tab:', error);
+                    console.error('Ralat HMI:', error);
                     tabSelector.innerHTML = '<option value="">Gagal - Ralat Pelayan</option>';
+                    tabSelector.disabled = true;
+
                     tbody.innerHTML = `
                         <tr>
                             <td colspan="13" class="px-6 py-10">
                                 <div class="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
                                     <i class="ph ph-warning-octagon text-4xl text-red-500 mb-2"></i>
-                                    <h4 class="font-bold text-red-800">Gagal Mengambil Senarai Tab</h4>
+                                    <h4 class="font-bold text-red-800">Gagal Menarik Data</h4>
                                     <p class="text-sm text-red-600 mt-1">${escapeHTML(error.message || String(error))}</p>
+                                    <p class="text-xs text-red-500 mt-2">Semak deployment Apps Script dan cuba Segar Semula.</p>
                                 </div>
                             </td>
                         </tr>`;
                 }
             }
 
-            async function fetchSheetData(tabName) {
+            function renderSheetData(sheetResult) {
                 const tbody = document.getElementById('wardTableBody');
                 const theadRow = document.getElementById('tableHeaderRow');
+                const tabName = sheetResult.sheet;
+                const rows = Array.isArray(sheetResult.data) ? sheetResult.data : [];
 
                 tbody.innerHTML = `
                     <tr>
                         <td colspan="13" class="px-6 py-12 text-center text-gray-500">
                             <i class="ph ph-arrows-clockwise animate-spin text-4xl text-brand-500 mb-3 inline-block"></i>
-                            <p class="font-medium text-gray-600">Menarik data dari tab [ ${escapeHTML(tabName)} ] ...</p>
+                            <p class="font-medium text-gray-600">Memaparkan data [ ${escapeHTML(tabName)} ] ...</p>
                         </td>
                     </tr>`;
 
-                try {
-                    const result = await callAPI({
-                        action: 'getSheet',
-                        sheet: tabName
-                    });
+                if (!rows.length) {
+                    tbody.innerHTML = '<tr><td colspan="13" class="px-6 py-8 text-center text-gray-500">Tab ini tiada data.</td></tr>';
+                    return;
+                }
 
-                    if (!result.success || !result.data || !Array.isArray(result.data.data)) {
-                        throw new Error(result.error || 'Format data tidak sah.');
-                    }
+                // Ambil jumlah kolum sebenar daripada keseluruhan data.
+                const maxCols = rows.reduce(
+                    (max, row) => Math.max(max, Array.isArray(row) ? row.length : 0),
+                    0
+                );
 
-                    const rows = result.data.data;
+                theadRow.innerHTML = '';
 
-                    if (!rows.length) {
-                        tbody.innerHTML = '<tr><td colspan="13" class="px-6 py-8 text-center text-gray-500">Tab ini tiada data.</td></tr>';
-                        return;
-                    }
+                for (let col = 0; col < maxCols; col++) {
+                    const th = document.createElement('th');
+                    th.scope = 'col';
+                    th.className =
+                        'px-4 py-3 font-semibold whitespace-nowrap ' +
+                        (col === 0 ? 'text-left' : 'text-center');
 
-                    // Baca SEMUA baris yang dikembalikan Apps Script.
-                    // Tiada limit/slice pada frontend.
-                    const maxCols = rows.reduce((max, row) => Math.max(max, Array.isArray(row) ? row.length : 0), 0);
+                    th.textContent =
+                        col === 0 ? 'Perkara / Data' : 'Kolum ' + (col + 1);
 
-                    theadRow.innerHTML = '';
+                    theadRow.appendChild(th);
+                }
+
+                tbody.innerHTML = '';
+
+                rows.forEach(row => {
+                    if (!Array.isArray(row)) return;
+
+                    const tr = document.createElement('tr');
+
+                    tr.className =
+                        'hover:bg-brand-50/50 transition-colors border-b border-gray-50 last:border-0';
+
                     for (let col = 0; col < maxCols; col++) {
-                        const th = document.createElement('th');
-                        th.scope = 'col';
-                        th.className = 'px-4 py-3 font-semibold whitespace-nowrap ' + (col === 0 ? 'text-left' : 'text-center');
-                        th.textContent = col === 0 ? 'Perkara / Data' : 'Kolum ' + (col + 1);
-                        theadRow.appendChild(th);
-                    }
+                        const td = document.createElement('td');
+                        const value = row[col] ?? '';
 
-                    tbody.innerHTML = '';
+                        if (col === 0) {
+                            td.className =
+                                'px-4 py-3 font-medium text-gray-900 whitespace-nowrap';
 
-                    rows.forEach((row, rowIndex) => {
-                        if (!Array.isArray(row)) return;
+                            td.textContent = value || '-';
 
-                        const tr = document.createElement('tr');
-                        tr.className = 'hover:bg-brand-50/50 transition-colors border-b border-gray-50 last:border-0';
+                        } else {
+                            td.className =
+                                'px-4 py-3 text-center align-middle';
 
-                        for (let col = 0; col < maxCols; col++) {
-                            const td = document.createElement('td');
-                            const value = row[col] ?? '';
-
-                            if (col === 0) {
-                                td.className = 'px-4 py-3 font-medium text-gray-900 whitespace-nowrap';
-                                td.textContent = value || '-';
-                            } else {
-                                td.className = 'px-4 py-3 text-center align-middle';
-                                td.innerHTML = interpretStatus(value);
-                            }
-
-                            tr.appendChild(td);
+                            td.innerHTML = interpretStatus(value);
                         }
 
-                        tbody.appendChild(tr);
-                    });
-
-                    const tableSummary = document.getElementById('tableSummary');
-                    if (tableSummary) {
-                        tableSummary.textContent = `${rows.length} baris • ${maxCols} kolum • Data penuh daripada Google Sheets`;
+                        tr.appendChild(td);
                     }
 
-                    // Chart: cuba cari baris yang mengandungi "peratus".
-                    const chartRows = rows.map(row => Array.isArray(row) ? row : []);
-                    const percentIndex = chartRows.findIndex(row =>
-                        row.some(cell => String(cell ?? '').toLowerCase().includes('peratus'))
-                    );
+                    tbody.appendChild(tr);
+                });
 
-                    if (percentIndex >= 0) {
-                        const percentRow = chartRows[percentIndex];
-                        const chartData = [];
-                        for (let i = 1; i <= 12; i++) {
-                            const raw = percentRow[i];
-                            const num = parseFloat(String(raw ?? '').replace('%', '').trim());
-                            chartData.push(Number.isFinite(num) ? num : null);
-                        }
-                        renderChart(chartData);
+                const tableSummary = document.getElementById('tableSummary');
+
+                if (tableSummary) {
+                    tableSummary.textContent =
+                        `${rows.length} baris • ${maxCols} kolum • ${escapeHTML(tabName)} • Data penuh`;
+                }
+
+                // Cuba cari baris peratus untuk chart.
+                const percentIndex = rows.findIndex(row =>
+                    Array.isArray(row) &&
+                    row.some(cell =>
+                        String(cell ?? '').toLowerCase().includes('peratus')
+                    )
+                );
+
+                if (percentIndex >= 0) {
+                    const percentRow = rows[percentIndex];
+                    const chartData = [];
+
+                    for (let i = 1; i <= 12; i++) {
+                        const raw = percentRow[i];
+                        const num = parseFloat(
+                            String(raw ?? '').replace('%', '').trim()
+                        );
+
+                        chartData.push(Number.isFinite(num) ? num : null);
                     }
 
-                } catch (error) {
-                    console.error('Ralat Tarik Data Tab:', error);
-                    tbody.innerHTML = `
-                        <tr>
-                            <td colspan="13" class="px-6 py-10">
-                                <div class="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
-                                    <i class="ph ph-bug text-4xl text-red-500 mb-2"></i>
-                                    <h4 class="font-bold text-red-800">Ralat Semasa Membaca Tab</h4>
-                                    <p class="text-sm text-red-600 mt-1">${escapeHTML(error.message || String(error))}</p>
-                                </div>
-                            </td>
-                        </tr>`;
+                    renderChart(chartData);
                 }
             }
 
