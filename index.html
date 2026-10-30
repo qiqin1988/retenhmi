@@ -235,8 +235,9 @@
     </style>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const API_URL = 'https://script.google.com/macros/s/AKfycbyWrqUS4YtzJUlaPpQ7t-4srLWYTokfypMXAlB_2h4rB1ngqKnuPnSpp-JN-nF2bC3-EA/exec';
+            const API_URL = 'https://script.google.com/macros/s/AKfycbxEl6tUavtaq3qtfiv33Tg7zexOo-lrLrKddfyz1pEabS3FqDAtuMwqjnHeCqjlIIbN/exec';
             let allHMIData = [];
+            let allCategories = [];
             let selectedTab = '';
             let filteredRows = [];
             let statusChart = null;
@@ -278,12 +279,12 @@
             function buildCategoryNav() {
                 const nav = document.getElementById('categoryNav');
                 nav.innerHTML = '';
-                allHMIData.forEach(item => {
-                    const meta = getMeta(item.sheet);
+                allCategories.forEach(name => {
+                    const meta = getMeta(name);
                     const btn = document.createElement('button');
-                    btn.className = 'category-btn' + (item.sheet === selectedTab ? ' active' : '');
+                    btn.className = 'category-btn' + (name === selectedTab ? ' active' : '');
                     btn.innerHTML = '<i class="ph ' + meta.icon + ' text-lg"></i><span>' + escapeHTML(meta.label) + '</span>';
-                    btn.onclick = () => selectTab(item.sheet);
+                    btn.onclick = () => selectTab(name);
                     nav.appendChild(btn);
                 });
             }
@@ -294,8 +295,7 @@
                 document.getElementById('statusFilter').value = 'all';
                 document.getElementById('monthFilter').value = 'all';
                 buildCategoryNav();
-                const item = allHMIData.find(x => x.sheet === name);
-                if (item) renderSmartTab(item);
+                renderSmartTab(name);
             }
 
             function isComplete(v) {
@@ -345,9 +345,8 @@
                 const incomplete = document.getElementById('kpiIncomplete');
                 const cp = document.getElementById('kpiCompletePct');
                 const ip = document.getElementById('kpiIncompletePct');
-                if (tabs) tabs.textContent = allHMIData.length;
-                const totalRows = allHMIData.reduce((s,x) => s + (Number(x.rows)||0), 0);
-                if (rows) rows.textContent = totalRows;
+                if (tabs) tabs.textContent = allCategories.length;
+                if (rows) rows.textContent = window.currentModel ? window.currentModel.rows.length : 0;
                 if (complete) complete.textContent = kpi.complete;
                 if (incomplete) incomplete.textContent = kpi.incomplete;
                 const denom = kpi.complete + kpi.incomplete;
@@ -366,27 +365,62 @@
                 return out;
             }
 
-            function renderSmartTab(item) {
-                const tab = normaliseTabName(item.sheet);
-                const rows = Array.isArray(item.data) ? item.data : [];
+            function renderSmartTab(categoryName) {
+                const tab = normaliseTabName(categoryName);
                 const meta = getMeta(tab);
+                let template = null;
+                const combinedRows = [];
+                let readableWards = 0;
+                let missingWards = 0;
+
+                allHMIData.forEach(ward => {
+                    const categoryData = ward.categories && ward.categories[tab];
+                    if (!categoryData || !categoryData.success || !Array.isArray(categoryData.values)) {
+                        missingWards++;
+                        return;
+                    }
+
+                    readableWards++;
+                    const rawRows = categoryData.values;
+                    let model;
+
+                    if (tab === 'KEMUDAHAN') model = parseKemudahan(rawRows);
+                    else if (tab === 'ORIENTASI') model = parseOrientasi(rawRows);
+                    else if (tab === 'LATIHAN') model = parseLatihan(rawRows);
+                    else if (tab === 'PRIVILEGING') model = parsePrivileging(rawRows);
+                    else model = parseGeneric(rawRows);
+
+                    if (!template) template = model;
+                    model.rows.forEach(record => {
+                        combinedRows.push({
+                            ...record,
+                            ward: ward.name,
+                            sub: record.sub || meta.desc
+                        });
+                    });
+                });
+
+                const model = template || {
+                    kind: tab === 'KEMUDAHAN' ? 'monthly' : 'monthlyMetric',
+                    headers: [],
+                    rows: [],
+                    title: meta.label
+                };
+                model.rows = combinedRows;
+                model.title = meta.label;
+                model.category = tab;
+
                 document.getElementById('dataTitle').textContent = meta.label;
-                document.getElementById('dataSubtitle').textContent = meta.desc + ' • Data penuh daripada Google Sheets';
+                document.getElementById('dataSubtitle').textContent =
+                    readableWards + ' daripada ' + allHMIData.length + ' wad berjaya dibaca' +
+                    (missingWards ? ' • ' + missingWards + ' wad tiada data kategori ini' : '') +
+                    ' • Paparan gabungan semua wad';
                 document.getElementById('summaryTitle').textContent = meta.label;
-                document.getElementById('summarySubtitle').textContent = meta.desc;
-                document.getElementById('summaryRows').textContent = rows.length;
-                document.getElementById('summaryCols').textContent = Number(item.columns)||0;
+                document.getElementById('summarySubtitle').textContent = readableWards + ' wad disambungkan';
+                document.getElementById('summaryRows').textContent = combinedRows.length;
+                document.getElementById('summaryCols').textContent = model.headers.length || 0;
 
-                let model;
-                if (tab === 'KEMUDAHAN') model = parseKemudahan(rows);
-                else if (tab === 'ORIENTASI') model = parseOrientasi(rows);
-                else if (tab === 'LATIHAN') model = parseLatihan(rows);
-                else if (tab === 'PRIVILEGING') model = parsePrivileging(rows);
-                else if (tab === 'adverse event') model = parseAdverse(rows);
-                else if (tab === 'Data Kehadiran Kursus') model = parseAttendance(rows);
-                else model = parseGeneric(rows);
-
-                filteredRows = model.rows;
+                filteredRows = combinedRows;
                 window.currentModel = model;
                 applyFilters();
                 renderCharts(model);
@@ -475,7 +509,7 @@
                 const month=document.getElementById('monthFilter')?.value||'all';
 
                 let rows=model.rows.filter(item=>{
-                    if(q && !(item.name+' '+item.sub+' '+item.values.join(' ')).toLowerCase().includes(q)) return false;
+                    if(q && !(item.ward+' '+item.name+' '+item.sub+' '+item.values.join(' ')).toLowerCase().includes(q)) return false;
                     if(model.kind==='monthly' && month!=='all'){
                         const v=item.values[Number(month)];
                         if(status!=='all' && statusType(v)!==status) return false;
@@ -504,51 +538,49 @@
             }
 
             function renderTable(model, rows) {
-                const view=document.getElementById('dataView');
-                const title=model.title;
-                let html='';
-                if(model.kind==='monthly'){
-                    const headers=['Perkara / Kemudahan'].concat(model.headers);
-                    html='<table class="hmi-table"><thead><tr><th style="text-align:left">Bil</th><th style="text-align:left">Item / Perkara</th>';
-                    headers.slice(1).forEach(h=>html+='<th>'+escapeHTML(h)+'</th>');
-                    html+='<th>Status</th><th>Tindakan</th></tr></thead><tbody>';
-                    rows.forEach((item,idx)=>{
-                        const pct=calcCompletion(item.values);
-                        html+='<tr><td><span class="inline-flex w-7 h-7 rounded-lg bg-slate-100 items-center justify-center text-xs font-bold text-slate-500">'+(idx+1)+'</span></td>';
-                        html+='<td class="item-cell"><div class="item-title">'+escapeHTML(item.name)+'</div><div class="item-sub">'+escapeHTML(item.sub)+'</div></td>';
-                        item.values.forEach(v=>html+='<td class="text-center">'+statusBadge(v)+'</td>');
-                        html+='<td><div class="flex items-center gap-2"><span class="progress-track"><span class="progress-fill" style="width:'+pct+'%"></span></span><b class="text-xs text-slate-700">'+pct+'%</b></div></td>';
-                        html+='<td><button class="view-btn" onclick="openDetail('+idx+')"><i class="ph ph-eye"></i>Lihat</button></td></tr>';
+                const view = document.getElementById('dataView');
+                let html = '';
+
+                if (model.kind === 'monthly') {
+                    html = '<table class="hmi-table"><thead><tr><th>Bil</th><th>Nama Wad</th><th style="text-align:left">Item / Perkara</th>';
+                    model.headers.forEach(h => html += '<th>' + escapeHTML(h) + '</th>');
+                    html += '<th>Pencapaian</th><th>Tindakan</th></tr></thead><tbody>';
+
+                    rows.forEach((item,idx) => {
+                        const pct = calcCompletion(item.values);
+                        html += '<tr><td>' + (idx+1) + '</td>';
+                        html += '<td><span class="font-semibold text-blue-700">' + escapeHTML(item.ward || '—') + '</span></td>';
+                        html += '<td class="item-cell"><div class="item-title">' + escapeHTML(item.name) + '</div><div class="item-sub">' + escapeHTML(item.sub) + '</div></td>';
+                        item.values.forEach(v => html += '<td class="text-center">' + statusBadge(v) + '</td>');
+                        html += '<td><div class="flex items-center gap-2"><span class="progress-track"><span class="progress-fill" style="width:' + pct + '%"></span></span><b class="text-xs text-slate-700">' + pct + '%</b></div></td>';
+                        html += '<td><button class="view-btn" onclick="openDetail(' + idx + ')"><i class="ph ph-eye"></i>Lihat</button></td></tr>';
                     });
-                    html+='</tbody></table>';
-                } else if(model.kind==='attendance'){
-                    html='<table class="hmi-table"><thead><tr><th>Bil</th><th style="text-align:left">Nama Staf</th><th>Jawatan / Wad</th>';
-                    model.headers.forEach(h=>html+='<th>'+escapeHTML(h)+'</th>');
-                    html+='<th>Tindakan</th></tr></thead><tbody>';
-                    rows.forEach((item,idx)=>{
-                        html+='<tr><td><span class="inline-flex w-7 h-7 rounded-lg bg-slate-100 items-center justify-center text-xs font-bold text-slate-500">'+(idx+1)+'</span></td><td class="item-cell"><div class="item-title">'+escapeHTML(item.name)+'</div></td><td>'+escapeHTML(item.sub)+'</td>';
-                        item.values.forEach(v=>html+='<td class="text-center">'+(String(v??'').trim()?'<span class="date-chip">'+escapeHTML(v)+'</span>':'<span class="text-slate-300">—</span>')+'</td>');
-                        html+='<td><button class="view-btn" onclick="openDetail('+idx+')"><i class="ph ph-eye"></i>Lihat</button></td></tr>';
-                    });
-                    html+='</tbody></table>';
                 } else {
-                    html='<table class="hmi-table"><thead><tr><th>Bil</th><th style="text-align:left">Bulan</th>';
-                    model.headers.forEach(h=>html+='<th>'+escapeHTML(h)+'</th>');
-                    html+='<th>Tindakan</th></tr></thead><tbody>';
-                    rows.forEach((item,idx)=>{
-                        html+='<tr><td><span class="inline-flex w-7 h-7 rounded-lg bg-slate-100 items-center justify-center text-xs font-bold text-slate-500">'+(idx+1)+'</span></td><td class="item-cell"><div class="item-title">'+escapeHTML(item.name)+'</div><div class="item-sub">'+escapeHTML(item.sub)+'</div></td>';
-                        item.values.forEach((v,i)=>{
-                            let display=v;
-                            if(i===model.headers.length-1 && percentValue(v)!==null) display=Math.round(percentValue(v))+'%';
-                            html+='<td class="text-center">'+(i===model.headers.length-1 && percentValue(v)!==null ? '<span class="font-bold text-blue-700">'+escapeHTML(display)+'</span>' : escapeHTML(display??'—'))+'</td>';
+                    html = '<table class="hmi-table"><thead><tr><th>Bil</th><th>Nama Wad</th><th style="text-align:left">Bulan / Rekod</th>';
+                    model.headers.forEach(h => html += '<th>' + escapeHTML(h) + '</th>');
+                    html += '<th>Tindakan</th></tr></thead><tbody>';
+
+                    rows.forEach((item,idx) => {
+                        html += '<tr><td>' + (idx+1) + '</td>';
+                        html += '<td><span class="font-semibold text-blue-700">' + escapeHTML(item.ward || '—') + '</span></td>';
+                        html += '<td class="item-cell"><div class="item-title">' + escapeHTML(item.name) + '</div><div class="item-sub">' + escapeHTML(item.sub) + '</div></td>';
+                        item.values.forEach((v,i) => {
+                            let display = v;
+                            if (i === model.headers.length-1 && percentValue(v) !== null) display = Math.round(percentValue(v)) + '%';
+                            const isPercent = i === model.headers.length-1 && percentValue(v) !== null;
+                            html += '<td class="text-center">' + (isPercent ? '<span class="font-bold text-blue-700">' + escapeHTML(display) + '</span>' : escapeHTML(display ?? '—')) + '</td>';
                         });
-                        html+='<td><button class="view-btn" onclick="openDetail('+idx+')"><i class="ph ph-eye"></i>Lihat</button></td></tr>';
+                        html += '<td><button class="view-btn" onclick="openDetail(' + idx + ')"><i class="ph ph-eye"></i>Lihat</button></td></tr>';
                     });
-                    html+='</tbody></table>';
                 }
-                if(!rows.length) html='<div class="min-h-[300px] flex items-center justify-center text-center text-slate-400"><div><i class="ph ph-magnifying-glass text-4xl"></i><p class="mt-2 font-semibold">Tiada rekod sepadan</p><p class="text-xs mt-1">Cuba ubah carian atau penapis.</p></div></div>';
-                view.innerHTML=html;
-                document.getElementById('tableSummary').textContent=rows.length+' rekod dipaparkan • '+model.rows.length+' rekod dalam kategori';
+
+                html += '</tbody></table>';
+                if (!rows.length) {
+                    html = '<div class="min-h-[300px] flex items-center justify-center text-center text-slate-400"><div><i class="ph ph-magnifying-glass text-4xl"></i><p class="mt-2 font-semibold">Tiada rekod sepadan</p><p class="text-xs mt-1">Cuba ubah carian atau penapis.</p></div></div>';
+                }
+                view.innerHTML = html;
+                document.getElementById('tableSummary').textContent =
+                    rows.length + ' rekod dipaparkan • ' + model.rows.length + ' rekod dalam kategori • ' + allHMIData.length + ' wad';
             }
 
             function calcCompletion(values) {
@@ -579,7 +611,7 @@
                 const model=window.currentModel;if(!model||!model.rows[index])return;
                 const item=model.rows[index];
                 document.getElementById('modalTitle').textContent=item.name;
-                document.getElementById('modalSubtitle').textContent=item.sub;
+                document.getElementById('modalSubtitle').textContent=(item.ward ? item.ward + ' • ' : '') + item.sub;
                 let html='<div class="space-y-3">';
                 item.values.forEach((v,i)=>{
                     const label=model.headers[i]||(['Jan','Feb','Mac','Apr','Mei','Jun','Jul','Ogo','Sep','Okt','Nov','Dis'][i]||('Data '+(i+1)));
@@ -592,17 +624,36 @@
             window.closeDetail=function(e){if(!e||e.target===e.currentTarget||!e.target.closest('.modal-card'))document.getElementById('detailModal').classList.add('hidden');};
 
             async function fetchTabList(){
-                try{
-                    const result=await callAPI({action:'getAll'});
-                    if(!result.success||!Array.isArray(result.data))throw new Error(result.error||'Data tidak dapat dibaca.');
-                    allHMIData=result.data;
-                    document.getElementById('kpiTabs').textContent=allHMIData.length;
-                    document.getElementById('kpiRows').textContent=allHMIData.reduce((s,x)=>s+(Number(x.rows)||0),0);
-                    selectedTab=selectedTab&&allHMIData.some(x=>x.sheet===selectedTab)?selectedTab:allHMIData[0]?.sheet||'';
+                const view = document.getElementById('dataView');
+                try {
+                    view.innerHTML = '<div class="min-h-[360px] flex items-center justify-center text-slate-400"><div class="text-center"><i class="ph ph-spinner-gap animate-spin text-4xl text-blue-500"></i><p class="mt-3 font-medium">Memuatkan data semua wad...</p></div></div>';
+
+                    const result = await callAPI({action:'getAll'});
+                    if (!result || !result.success || !Array.isArray(result.wards)) {
+                        throw new Error((result && result.message) || 'Struktur data API tidak sah.');
+                    }
+
+                    allHMIData = result.wards;
+                    allCategories = Array.isArray(result.categories) ? result.categories : ['KEMUDAHAN','ORIENTASI','LATIHAN','PRIVILEGING'];
+
+                    const successCount = Number(result.successfulWards ?? allHMIData.filter(w => w.success).length);
+                    const failedCount = Number(result.failedWards ?? (allHMIData.length - successCount));
+                    document.getElementById('kpiTabs').textContent = allCategories.length;
+                    document.getElementById('kpiRows').textContent = allHMIData.length;
+                    document.getElementById('dataSubtitle').textContent =
+                        successCount + ' daripada ' + allHMIData.length + ' wad berjaya disambungkan' +
+                        (failedCount ? ' • ' + failedCount + ' wad gagal' : '');
+
+                    selectedTab = allCategories.includes(selectedTab) ? selectedTab : (allCategories[0] || '');
                     buildCategoryNav();
-                    if(selectedTab)selectTab(selectedTab);
-                }catch(error){
-                    document.getElementById('dataView').innerHTML='<div class="min-h-[360px] flex items-center justify-center p-6"><div class="text-center max-w-md"><div class="w-14 h-14 mx-auto rounded-2xl bg-rose-50 text-rose-500 flex items-center justify-center"><i class="ph ph-warning-octagon text-2xl"></i></div><h3 class="font-bold text-slate-800 mt-3">Gagal Menarik Data</h3><p class="text-sm text-slate-500 mt-1">'+escapeHTML(error.message||String(error))+'</p></div></div>';
+                    if (selectedTab) selectTab(selectedTab);
+
+                    if (failedCount) {
+                        console.warn('Wad gagal dibaca:', allHMIData.filter(w => !w.success));
+                    }
+                } catch(error) {
+                    view.innerHTML = '<div class="min-h-[360px] flex items-center justify-center p-6"><div class="text-center max-w-md"><div class="w-14 h-14 mx-auto rounded-2xl bg-rose-50 text-rose-500 flex items-center justify-center"><i class="ph ph-warning-octagon text-2xl"></i></div><h3 class="font-bold text-slate-800 mt-3">Gagal Menarik Data</h3><p class="text-sm text-slate-500 mt-1">' + escapeHTML(error.message || String(error)) + '</p><button class="view-btn mt-4" onclick="fetchTabList()"><i class="ph ph-arrows-clockwise"></i>Cuba Lagi</button></div></div>';
+                    console.error(error);
                 }
             }
             window.fetchTabList=fetchTabList;
