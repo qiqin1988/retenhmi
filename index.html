@@ -115,7 +115,7 @@
                         </div>
                     </div>
                     <div class="flex flex-col sm:flex-row gap-2 w-full xl:w-auto">
-                        <select id="wardFilter" class="filter-control" onchange="applyFilters()" aria-label="Pilih wad">
+                        <select id="wardFilter" class="filter-control" onchange="selectWard(this.value)" aria-label="Pilih wad">
                             <option value="">Pilih Wad</option>
                         </select>
                         <div class="search-box">
@@ -238,6 +238,10 @@
             let allHMIData = [];
             let allCategories = [];
             let selectedTab = '';
+            let selectedWardId = '';
+            let totalWards = 0;
+            let loadSequence = 0;
+            const wardCategoryCache = {};
             let filteredRows = [];
             let statusChart = null;
             let monthlyTrendChartInstance = null;
@@ -270,7 +274,7 @@
                         settled = true;
                         cleanup();
                         reject(new Error('Masa menunggu API tamat. Respons data 36 wad mengambil masa terlalu lama atau terlalu besar.'));
-                    }, 120000);
+                    }, 45000);
                     window[callbackName] = data => {
                         if (settled) return;
                         settled = true;
@@ -315,7 +319,57 @@
                 document.getElementById('statusFilter').value = 'all';
                 document.getElementById('monthFilter').value = 'all';
                 buildCategoryNav();
-                renderSmartTab(name);
+                loadSelectedData();
+            }
+
+            function selectWard(id) {
+                selectedWardId = id || '';
+                document.getElementById('searchInput').value = '';
+                document.getElementById('statusFilter').value = 'all';
+                document.getElementById('monthFilter').value = 'all';
+                loadSelectedData();
+            }
+
+            async function loadSelectedData() {
+                const view = document.getElementById('dataView');
+                const sequence = ++loadSequence;
+
+                if (!selectedWardId) {
+                    window.currentModel = null;
+                    view.innerHTML = '<div class="min-h-[300px] flex items-center justify-center text-center text-slate-400"><div><i class="ph ph-buildings text-4xl"></i><p class="mt-2 font-semibold">Sila pilih wad</p><p class="text-xs mt-1">Pilih satu wad dan kategori untuk melihat reten.</p></div></div>';
+                    document.getElementById('tableSummary').textContent = totalWards + ' wad tersedia';
+                    document.getElementById('dataSubtitle').textContent = 'Pilih wad untuk memaparkan data.';
+                    document.getElementById('kpiRows').textContent = '—';
+                    document.getElementById('summaryRows').textContent = '—';
+                    document.getElementById('summarySubtitle').textContent = 'Belum ada wad dipilih';
+                    return;
+                }
+
+                const cacheKey = selectedWardId + '::' + selectedTab;
+                const selectedOption = document.getElementById('wardFilter').selectedOptions[0];
+                const wardName = selectedOption ? selectedOption.textContent : 'Wad dipilih';
+                view.innerHTML = '<div class="min-h-[300px] flex items-center justify-center text-slate-400"><div class="text-center"><i class="ph ph-spinner-gap animate-spin text-4xl text-blue-500"></i><p class="mt-3 font-medium">Memuatkan ' + escapeHTML(wardName) + ' • ' + escapeHTML(getMeta(selectedTab).label) + '...</p></div></div>';
+
+                try {
+                    let ward;
+                    if (wardCategoryCache[cacheKey]) {
+                        ward = wardCategoryCache[cacheKey];
+                    } else {
+                        const result = await callAPI({action:'getWard', id:selectedWardId, category:selectedTab});
+                        if (sequence !== loadSequence) return;
+                        if (!result || !result.success || !result.ward) {
+                            throw new Error((result && result.message) || 'Data wad tidak dapat dibaca.');
+                        }
+                        ward = result.ward;
+                        wardCategoryCache[cacheKey] = ward;
+                    }
+                    if (sequence !== loadSequence) return;
+                    allHMIData = [ward];
+                    renderSmartTab(selectedTab);
+                } catch(error) {
+                    if (sequence !== loadSequence) return;
+                    view.innerHTML = '<div class="min-h-[300px] flex items-center justify-center p-6"><div class="text-center"><i class="ph ph-warning-octagon text-3xl text-rose-500"></i><p class="mt-2 font-semibold">Gagal memuatkan data</p><p class="text-sm text-slate-500 mt-1">' + escapeHTML(error.message || String(error)) + '</p><button class="view-btn mt-3" onclick="loadSelectedData()">Cuba Lagi</button></div></div>';
+                }
             }
 
             function isComplete(v) {
@@ -527,10 +581,7 @@
                 const q=(document.getElementById('searchInput')?.value||'').toLowerCase().trim();
                 const status=document.getElementById('statusFilter')?.value||'all';
                 const month=document.getElementById('monthFilter')?.value||'all';
-                const selectedWard=document.getElementById('wardFilter')?.value||'';
-
                 let rows=model.rows.filter(item=>{
-                    if(!selectedWard || item.ward !== selectedWard) return false;
                     if(q && !(item.ward+' '+item.name+' '+item.sub+' '+item.values.join(' ')).toLowerCase().includes(q)) return false;
                     if(model.kind==='monthly' && month!=='all'){
                         const v=item.values[Number(month)];
@@ -603,7 +654,7 @@
                 }
                 view.innerHTML = html;
                 document.getElementById('tableSummary').textContent =
-                    rows.length + ' rekod dipaparkan • ' + model.rows.length + ' rekod dalam kategori • ' + allHMIData.length + ' wad';
+                    rows.length + ' rekod dipaparkan • ' + model.rows.length + ' rekod bagi wad ini • ' + totalWards + ' wad tersedia';
             }
 
             function calcCompletion(values) {
@@ -649,35 +700,32 @@
             async function fetchTabList(){
                 const view = document.getElementById('dataView');
                 try {
-                    view.innerHTML = '<div class="min-h-[360px] flex items-center justify-center text-slate-400"><div class="text-center"><i class="ph ph-spinner-gap animate-spin text-4xl text-blue-500"></i><p class="mt-3 font-medium">Memuatkan data 36 wad dan empat kategori...</p></div></div>';
+                    view.innerHTML = '<div class="min-h-[300px] flex items-center justify-center text-slate-400"><div class="text-center"><i class="ph ph-spinner-gap animate-spin text-4xl text-blue-500"></i><p class="mt-3 font-medium">Memuatkan senarai wad...</p></div></div>';
 
-                    const result = await callAPI({action:'getAll'});
+                    const result = await callAPI({action:'list'});
                     if (!result || !result.success || !Array.isArray(result.wards)) {
-                        throw new Error((result && result.message) || 'Struktur data API tidak sah.');
+                        throw new Error((result && result.message) || 'Senarai wad tidak dapat dibaca.');
                     }
 
-                    allHMIData = result.wards;
+                    totalWards = result.wards.length;
+                    allHMIData = [];
                     allCategories = Array.isArray(result.categories) ? result.categories : ['KEMUDAHAN','ORIENTASI','LATIHAN','PRIVILEGING'];
 
                     const wardFilter = document.getElementById('wardFilter');
-                    wardFilter.innerHTML = '<option value="">Pilih Wad</option>' +
-                        allHMIData.filter(w => w.success).map(w => '<option value="' + escapeHTML(w.name) + '">' + escapeHTML(w.name) + '</option>').join('');
+                    wardFilter.innerHTML = '<option value="">Pilih Wad (' + totalWards + ' tersedia)</option>' +
+                        result.wards.map(w => '<option value="' + escapeHTML(w.id) + '">' + escapeHTML(w.name) + '</option>').join('');
 
-                    const successCount = Number(result.successfulWards ?? allHMIData.filter(w => w.success).length);
-                    const failedCount = Number(result.failedWards ?? (allHMIData.length - successCount));
                     document.getElementById('kpiTabs').textContent = allCategories.length;
-                    document.getElementById('kpiRows').textContent = allHMIData.length;
-                    document.getElementById('dataSubtitle').textContent =
-                        successCount + ' daripada ' + allHMIData.length + ' wad berjaya disambungkan' +
-                        (failedCount ? ' • ' + failedCount + ' wad gagal' : '');
+                    document.getElementById('kpiRows').textContent = totalWards;
+                    document.getElementById('dataSubtitle').textContent = totalWards + ' wad tersedia • Data dimuatkan apabila dipilih';
 
                     selectedTab = allCategories.includes(selectedTab) ? selectedTab : (allCategories[0] || '');
                     buildCategoryNav();
-                    if (selectedTab) selectTab(selectedTab);
-
-                    if (failedCount) console.warn('Wad gagal dibaca:', allHMIData.filter(w => !w.success));
+                    window.currentModel = null;
+                    view.innerHTML = '<div class="min-h-[300px] flex items-center justify-center text-center text-slate-400"><div><i class="ph ph-hand-point-up text-4xl"></i><p class="mt-2 font-semibold">Pilih wad untuk bermula</p><p class="text-xs mt-1">Data akan dimuatkan mengikut wad dan kategori yang dipilih.</p></div></div>';
+                    document.getElementById('tableSummary').textContent = totalWards + ' wad tersedia';
                 } catch(error) {
-                    view.innerHTML = '<div class="min-h-[360px] flex items-center justify-center p-6"><div class="text-center max-w-md"><div class="w-14 h-14 mx-auto rounded-2xl bg-rose-50 text-rose-500 flex items-center justify-center"><i class="ph ph-warning-octagon text-2xl"></i></div><h3 class="font-bold text-slate-800 mt-3">Gagal Menarik Data</h3><p class="text-sm text-slate-500 mt-1">' + escapeHTML(error.message || String(error)) + '</p><button class="view-btn mt-4" onclick="fetchTabList()"><i class="ph ph-arrows-clockwise"></i>Cuba Lagi</button></div></div>';
+                    view.innerHTML = '<div class="min-h-[300px] flex items-center justify-center p-6"><div class="text-center max-w-md"><div class="w-14 h-14 mx-auto rounded-2xl bg-rose-50 text-rose-500 flex items-center justify-center"><i class="ph ph-warning-octagon text-2xl"></i></div><h3 class="font-bold text-slate-800 mt-3">Gagal Memuatkan Senarai Wad</h3><p class="text-sm text-slate-500 mt-1">' + escapeHTML(error.message || String(error)) + '</p><button class="view-btn mt-4" onclick="fetchTabList()">Cuba Lagi</button></div></div>';
                     console.error(error);
                 }
             }
