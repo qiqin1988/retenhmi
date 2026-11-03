@@ -596,6 +596,18 @@
                 return {kind:'generic',headers:[],rows:data,title:'Data HMI'};
             }
 
+            function monthIndexFromLabel(value) {
+                const s=String(value||'').trim().toUpperCase().replace(/[^A-Z]/g,'');
+                const aliases = [
+                    ['JAN','JANUARI'], ['FEB','FEBRUARI'], ['MAC','MAR','MARCH'],
+                    ['APR','APRIL'], ['MEI','MAY'], ['JUN','JUNE'],
+                    ['JUL','JULAI','JULY'], ['OGO','OGOS','AUG','AUGUST'],
+                    ['SEP','SEPT','SEPTEMBER'], ['OKT','OCT','OKTOBER','OCTOBER'],
+                    ['NOV','NOVEMBER'], ['DIS','DEC','DISEMBER','DECEMBER']
+                ];
+                return aliases.findIndex(group => group.includes(s));
+            }
+
             function applyFilters() {
                 const model=window.currentModel;
                 if(!model) return;
@@ -604,11 +616,19 @@
                 const month=document.getElementById('monthFilter')?.value||'all';
                 let rows=model.rows.filter(item=>{
                     if(q && !(item.ward+' '+item.name+' '+item.sub+' '+item.values.join(' ')).toLowerCase().includes(q)) return false;
-                    if(model.kind==='monthly' && month!=='all'){
+
+                    // Kategori berbentuk senarai bulan (Orientasi, Latihan, Privileging):
+                    // tapis berdasarkan nama rekod/bulan, bukan indeks lajur.
+                    if(model.kind==='monthlyMetric' && month!=='all') {
+                        if(monthIndexFromLabel(item.name)!==Number(month)) return false;
+                    }
+
+                    // Kategori Kemudahan menyimpan bulan sebagai lajur.
+                    if(model.kind==='monthly' && month!=='all') {
                         const v=item.values[Number(month)];
+                        if(String(v??'').trim()==='') return false;
                         if(status!=='all' && statusType(v)!==status) return false;
-                        if(month!=='all' && String(v??'').trim()==='') return false;
-                    } else if(status!=='all'){
+                    } else if(status!=='all') {
                         const types=item.values.map(statusType);
                         if(!types.includes(status)) return false;
                     }
