@@ -601,6 +601,8 @@
                 updateSelectedKPI(model,rows);
             }
 
+            window.applyFilters = applyFilters;
+
             function updateSelectedKPI(model, rows) {
                 let k={complete:0,incomplete:0,total:0};
                 rows.forEach(item=>item.values.forEach(v=>{
