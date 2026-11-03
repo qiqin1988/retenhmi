@@ -329,6 +329,9 @@
                 document.getElementById('monthFilter').value = 'all';
                 loadSelectedData();
             }
+            // Expose handlers used by inline HTML controls.
+            window.selectWard = selectWard;
+            window.loadSelectedData = loadSelectedData;
 
             async function loadSelectedData() {
                 const view = document.getElementById('dataView');
