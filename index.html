@@ -156,20 +156,22 @@
         </section>
 
         <section class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-8">
-            <div class="glass-card rounded-3xl p-5 sm:p-6 lg:col-span-1">
-                <div class="flex items-center justify-between mb-4">
-                    <div><p class="section-label">STATUS</p><h3 class="dashboard-heading text-lg font-bold text-slate-900">Ringkasan Keseluruhan</h3></div>
-                    <div class="section-icon green"><i class="ph ph-chart-donut"></i></div>
-                </div>
-                <div class="relative h-56"><canvas id="statusChart"></canvas></div>
-                <div id="statusLegend" class="grid grid-cols-3 gap-2 text-center text-xs"></div>
+            <div class="glass-card rounded-3xl p-5 sm:p-6">
+                <div class="mb-3"><p class="section-label">SEMUA WAD</p><h3 class="dashboard-heading text-lg font-bold text-slate-900">Carta Pie Pencapaian</h3><p id="allPieSubtitle" class="text-xs text-slate-500 mt-1">Ringkasan semua wad</p></div>
+                <div class="relative h-64"><canvas id="allWardsPie"></canvas></div>
             </div>
-
-            <div class="glass-card rounded-3xl p-5 sm:p-6 lg:col-span-1">
-                <div class="mb-4"><p class="section-label">TREND</p><h3 class="dashboard-heading text-lg font-bold text-slate-900">Trend Bulanan</h3><p id="trendSubtitle" class="text-xs text-slate-500 mt-1">Pencapaian mengikut bulan</p></div>
-                <div class="relative h-56"><canvas id="monthlyTrendChart"></canvas></div>
+            <div class="glass-card rounded-3xl p-5 sm:p-6">
+                <div class="mb-3"><p class="section-label">PERBANDINGAN</p><h3 class="dashboard-heading text-lg font-bold text-slate-900">Graf Prestasi Mengikut Wad</h3><p id="allBarSubtitle" class="text-xs text-slate-500 mt-1">Perbandingan pencapaian semua wad</p></div>
+                <div class="relative h-64"><canvas id="allWardsBar"></canvas></div>
             </div>
-
+            <div class="glass-card rounded-3xl p-5 sm:p-6">
+                <div class="mb-3"><p class="section-label">WAD DIPILIH</p><h3 class="dashboard-heading text-lg font-bold text-slate-900">Carta Pie Wad</h3><p id="selectedPieSubtitle" class="text-xs text-slate-500 mt-1">Pilih wad untuk melihat pencapaian</p></div>
+                <div class="relative h-64"><canvas id="selectedWardPie"></canvas></div>
+            </div>
+            <div class="glass-card rounded-3xl p-5 sm:p-6">
+                <div class="mb-3"><p class="section-label">PRESTASI BULANAN</p><h3 class="dashboard-heading text-lg font-bold text-slate-900">Graf Wad Dipilih</h3><p id="selectedBarSubtitle" class="text-xs text-slate-500 mt-1">Pencapaian mengikut bulan</p></div>
+                <div class="relative h-64"><canvas id="selectedWardBar"></canvas></div>
+            </div>
         </section>
 
         <footer class="text-center text-xs text-slate-400 pb-4">
@@ -233,8 +235,8 @@
             let loadSequence = 0;
             const wardCategoryCache = {};
             let filteredRows = [];
-            let statusChart = null;
-            let monthlyTrendChartInstance = null;
+            const chartInstances = {};
+            const allWardChartCache = {};
 
             const TAB_META = {
                 'KEMUDAHAN': { icon:'ph-house-line', label:'Kemudahan', desc:'Kemudahan & peralatan HMI' },
@@ -333,8 +335,6 @@
                     document.getElementById('tableSummary').textContent = totalWards + ' wad tersedia';
                     document.getElementById('dataSubtitle').textContent = 'Pilih wad untuk memaparkan data.';
                     document.getElementById('kpiRows').textContent = '—';
-                    document.getElementById('summaryRows').textContent = '—';
-                    document.getElementById('summarySubtitle').textContent = 'Belum ada wad dipilih';
                     return;
                 }
 
@@ -482,10 +482,6 @@
                     readableWards + ' daripada ' + allHMIData.length + ' wad berjaya dibaca' +
                     (missingWards ? ' • ' + missingWards + ' wad tiada data kategori ini' : '') +
                     ' • Pilih wad untuk melihat reten';
-                document.getElementById('summaryTitle').textContent = meta.label;
-                document.getElementById('summarySubtitle').textContent = readableWards + ' wad disambungkan';
-                document.getElementById('summaryRows').textContent = combinedRows.length;
-                document.getElementById('summaryCols').textContent = model.headers.length || 0;
 
                 filteredRows = combinedRows;
                 window.currentModel = model;
@@ -696,22 +692,101 @@
                 return total ? Math.round(yes/total*100) : 0;
             }
 
-            function renderCharts(model) {
-                let complete=0,incomplete=0,na=0;
-                model.rows.forEach(item=>item.values.forEach(v=>{const t=statusType(v);if(t==='complete')complete++;else if(t==='incomplete')incomplete++;else if(String(v??'').trim())na++;}));
-                if(statusChart) statusChart.destroy();
-                const ctx=document.getElementById('statusChart').getContext('2d');
-                statusChart=new Chart(ctx,{type:'doughnut',data:{labels:['Lengkap','Tidak Lengkap','Lain-lain'],datasets:[{data:[complete,incomplete,na],backgroundColor:['#22c55e','#fb7185','#94a3b8'],borderWidth:0,hoverOffset:5}]},options:{responsive:true,maintainAspectRatio:false,cutout:'72%',plugins:{legend:{display:false}}}});
-                document.getElementById('statusLegend').innerHTML='<div><b class="text-emerald-600">'+complete+'</b><span class="block text-slate-400">Lengkap</span></div><div><b class="text-rose-500">'+incomplete+'</b><span class="block text-slate-400">Tidak Lengkap</span></div><div><b class="text-slate-500">'+na+'</b><span class="block text-slate-400">Lain-lain</span></div>';
+            function modelForWard(ward, category) {
+                const raw = ward.categories && ward.categories[category] && ward.categories[category].values;
+                if (!Array.isArray(raw)) return null;
+                if (category === 'KEMUDAHAN') return parseKemudahan(raw);
+                if (category === 'ORIENTASI') return parseOrientasi(raw);
+                if (category === 'LATIHAN') return parseLatihan(raw);
+                if (category === 'PRIVILEGING') return parsePrivileging(raw);
+                return null;
+            }
 
-                const monthly=[null,null,null,null,null,null,null,null,null,null,null,null];
-                model.rows.forEach(item=>{
-                    if(model.kind==='monthly') item.values.slice(0,12).forEach((v,i)=>{const t=statusType(v);if(t==='complete'||t==='incomplete'){monthly[i]=(monthly[i]||{yes:0,total:0});monthly[i].total++;if(t==='complete')monthly[i].yes++;}});
-                    if(model.kind==='monthlyMetric'){const pv=percentValue(item.values[item.values.length-1]); const idx=['JAN','FEB','MAC','APRIL','MEI','JUN','JULAI','OGOS','SEPTEMBER','OKTOBER','NOVEMBER','DISEMBER'].findIndex(x=>x===String(item.name).toUpperCase());if(idx>=0)monthly[idx]=pv;}
+            function monthPercentages(model) {
+                const months = ['JANUARI','FEBRUARI','MAC','APRIL','MEI','JUN','JULAI','OGOS','SEPTEMBER','OKTOBER','NOVEMBER','DISEMBER'];
+                if (model.kind === 'monthlyMetric') {
+                    return months.map(m => {
+                        const row = model.rows.find(x => String(x.name).toUpperCase() === m || String(x.name).toUpperCase().startsWith(m.slice(0,3)));
+                        if (!row) return null;
+                        const p = percentValue(row.values[row.values.length - 1]);
+                        return Number.isFinite(p) ? p : null;
+                    });
+                }
+                return months.map((m, i) => {
+                    let yes = 0, total = 0;
+                    model.rows.forEach(row => {
+                        const t = statusType(row.values[i]);
+                        if (t === 'complete' || t === 'incomplete') { total++; if (t === 'complete') yes++; }
+                    });
+                    return total ? Math.round(yes / total * 100) : null;
                 });
-                const trend=monthly.map(x=>x&&x.total?Math.round(x.yes/x.total*100):x);
-                if(monthlyTrendChartInstance) monthlyTrendChartInstance.destroy();
-                monthlyTrendChartInstance=new Chart(document.getElementById('monthlyTrendChart').getContext('2d'),{type:'line',data:{labels:['Jan','Feb','Mac','Apr','Mei','Jun','Jul','Ogo','Sep','Okt','Nov','Dis'],datasets:[{label:'Pencapaian',data:trend,borderColor:'#2563eb',backgroundColor:'rgba(37,99,235,.08)',fill:true,tension:.35,pointRadius:3,pointHoverRadius:6,spanGaps:true}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>(c.parsed.y??0)+'%'}}},scales:{y:{beginAtZero:true,max:100,ticks:{stepSize:20,color:'#94a3b8'},grid:{color:'#eef2f7'}},x:{ticks:{color:'#64748b'},grid:{display:false}}}}});
+            }
+
+            function scoreForModel(model) {
+                if (model.kind === 'monthly') {
+                    const vals = model.rows.flatMap(row => row.values).map(statusType).filter(x => x === 'complete' || x === 'incomplete');
+                    return vals.length ? Math.round(vals.filter(x => x === 'complete').length / vals.length * 100) : 0;
+                }
+                const vals = monthPercentages(model).filter(x => x !== null && Number.isFinite(x));
+                return vals.length ? Math.round(vals.reduce((a,b) => a+b,0) / vals.length) : 0;
+            }
+
+            function drawChart(id, config) {
+                if (chartInstances[id]) chartInstances[id].destroy();
+                const canvas = document.getElementById(id);
+                if (canvas) chartInstances[id] = new Chart(canvas.getContext('2d'), config);
+            }
+
+            function renderCharts(model) {
+                const category = model.category || selectedTab;
+                const selectedName = document.getElementById('wardFilter').selectedOptions[0]?.textContent || 'Wad dipilih';
+                const selectedScore = scoreForModel(model);
+                const selectedMonths = monthPercentages(model);
+                const allWards = allWardChartCache[category] || [];
+                const wardModels = allWards.map(w => ({name:w.name, model:modelForWard(w, category)})).filter(x => x.model);
+                const scores = wardModels.map(x => ({name:x.name, score:scoreForModel(x.model)}));
+                const avg = scores.length ? Math.round(scores.reduce((s,x)=>s+x.score,0)/scores.length) : selectedScore;
+
+                document.getElementById('allPieSubtitle').textContent = scores.length ? scores.length + ' wad • purata pencapaian ' + avg + '%' : 'Sedang mendapatkan data semua wad...';
+                document.getElementById('allBarSubtitle').textContent = scores.length ? 'Perbandingan peratus pencapaian ' + scores.length + ' wad' : 'Carta akan dikemas kini selepas data diterima';
+                document.getElementById('selectedPieSubtitle').textContent = selectedName + ' • pencapaian ' + selectedScore + '%';
+                document.getElementById('selectedBarSubtitle').textContent = selectedName + ' • Januari hingga Disember';
+
+                drawChart('allWardsPie', {
+                    type:'doughnut',
+                    data:{labels:['Purata pencapaian','Baki'],datasets:[{data:[avg,Math.max(0,100-avg)],backgroundColor:['#2563eb','#e8eef7'],borderWidth:0,hoverOffset:5}]},
+                    options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{position:'bottom'}}}
+                });
+                drawChart('allWardsBar', {
+                    type:'bar',
+                    data:{labels:scores.length?scores.map(x=>x.name):[selectedName],datasets:[{label:'Pencapaian (%)',data:scores.length?scores.map(x=>x.score):[selectedScore],backgroundColor:'#3b82f6',borderRadius:6}]},
+                    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,max:100,ticks:{callback:v=>v+'%'}},y:{ticks:{autoSkip:false}}}}
+                });
+                drawChart('selectedWardPie', {
+                    type:'doughnut',
+                    data:{labels:['Pencapaian','Baki'],datasets:[{data:[selectedScore,Math.max(0,100-selectedScore)],backgroundColor:['#16a34a','#e8eef7'],borderWidth:0,hoverOffset:5}]},
+                    options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{position:'bottom'}}}
+                });
+                drawChart('selectedWardBar', {
+                    type:'bar',
+                    data:{labels:['Jan','Feb','Mac','Apr','Mei','Jun','Jul','Ogo','Sep','Okt','Nov','Dis'],datasets:[{label:'Pencapaian (%)',data:selectedMonths,backgroundColor:'#0ea5e9',borderRadius:5}]},
+                    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,max:100,ticks:{callback:v=>v+'%'}},x:{grid:{display:false}}}}
+                });
+
+                if (!allWardChartCache[category] && !window.loadingAllWardCharts) {
+                    window.loadingAllWardCharts = category;
+                    callAPI({action:'getCategoryAll',category:category}).then(result => {
+                        if (result && result.success && Array.isArray(result.wards)) {
+                            allWardChartCache[category] = result.wards;
+                            if (window.currentModel && window.currentModel.category === category) renderCharts(window.currentModel);
+                        }
+                    }).catch(err => {
+                        document.getElementById('allPieSubtitle').textContent = 'Data semua wad belum tersedia.';
+                        console.warn('Graf semua wad:', err);
+                    }).finally(() => {
+                        if (window.loadingAllWardCharts === category) window.loadingAllWardCharts = null;
+                    });
+                }
             }
 
             window.openDetail=function(index){
