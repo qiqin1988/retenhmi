@@ -543,13 +543,31 @@
 
             function parsePrivileging(rows) {
                 const data=[];
+                // Ambil rekod bulan JANUARI hingga DISEMBER sahaja.
+                // Elakkan baris "Disediakan oleh" / "Disahkan oleh"
+                // yang sebelum ini tersalah dibaca sebagai bulan DIS.
+                const monthPattern = /^(JAN|JANUARI|FEB|FEBRUARI|MAC|APR|APRIL|MEI|MAY|JUN|JUL|JULAI|OGO|OGOS|SEPT|SEPTEMBER|OKT|OKTOBER|NOV|NOVEMBER|DIS|DISEMBER)$/i;
+
                 for(let i=0;i<rows.length;i++){
-                    const r=rows[i]||[], label=String(r[0]||'').trim();
-                    if(/^(JAN|FEB|MAC|APRIL|MEI|JUN|JULAI|OGOS|SEPT|OKT|NOV|DIS)/i.test(label)){
-                        data.push({name:label,sub:'Privileging staf dalam program HMI',values:[r[1],r[2],r[3]],raw:r});
-                    }
+                    const r=rows[i]||[];
+                    const label=String(r[0]||'').trim().toUpperCase();
+
+                    if(!monthPattern.test(label)) continue;
+
+                    data.push({
+                        name: label,
+                        sub: 'Privileging staf dalam program HMI',
+                        values: [r[1], r[2], r[3]],
+                        raw: r
+                    });
                 }
-                return {kind:'monthlyMetric',headers:['Staf dilantik','Staf Islam','Peratusan'],rows:data,title:'Privileging'};
+
+                return {
+                    kind:'monthlyMetric',
+                    headers:['Staf dilantik','Staf Islam','Peratusan'],
+                    rows:data.slice(0,12),
+                    title:'Privileging'
+                };
             }
 
             function parseAdverse(rows) {
