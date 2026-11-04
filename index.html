@@ -480,6 +480,7 @@
                     else if (tab === 'LATIHAN') model = parseLatihan(rawRows);
                     else if (tab === 'PRIVILEGING') model = parsePrivileging(rawRows);
                     else if (tab === 'ADVERSE EVENT') model = parseAdverse(rawRows);
+                    else if (tab === 'DATA KEHADIRAN KURSUS') model = parseAttendance(rawRows);
                     else model = parseGeneric(rawRows);
 
                     if (!template) template = model;
@@ -630,10 +631,23 @@
                 const data=[];
                 for(let i=0;i<rows.length;i++){
                     const r=rows[i]||[];
-                    const bil=r[0], name=String(r[1]||'').trim();
-                    if(name && !isNaN(Number(bil))) data.push({name,sub:String(r[2]||'') + ' • ' + String(r[3]||''),values:[r[4],r[5],r[6]],raw:r});
+                    const bil=String(r[0]??'').trim();
+                    const name=String(r[1]??'').trim();
+                    // Ambil hanya baris staf sebenar: nombor bil dan nama staf mesti wujud.
+                    if(name && /^\\d+$/.test(bil)){
+                        data.push({
+                            bil:bil,
+                            name:name,
+                            position:String(r[2]??'').trim(),
+                            ward:String(r[3]??'').trim(),
+                            course:String(r[4]??'').trim(),
+                            date:String(r[5]??'').trim(),
+                            organiser:String(r[6]??'').trim(),
+                            raw:r
+                        });
+                    }
                 }
-                return {kind:'attendance',headers:['Kursus Pengurusan Ibadah','TOT Pengurusan Ibadah','Spiritual Care'],rows:data,title:'Kehadiran Kursus'};
+                return {kind:'attendance',headers:['Nama Staf','Jawatan','Wad','Jenis Latihan Dihadiri','Tarikh Latihan','Anjuran'],rows:data,title:'Kehadiran Kursus'};
             }
 
             function parseGeneric(rows) {
@@ -703,7 +717,22 @@
                 const showWardColumn = !selectedWardId;
                 let html = '';
 
-                if (model.kind === 'adverse') {
+                if (model.kind === 'attendance') {
+                    html = '<div class="overflow-x-auto p-3 sm:p-5"><table class="w-full min-w-[900px] border-collapse"><thead><tr class="bg-slate-100 text-slate-600 text-xs"><th class="p-3 text-center">BIL</th>' +
+                        (showWardColumn ? '<th class="p-3 text-left">WAD</th>' : '') +
+                        '<th class="p-3 text-left">NAMA STAF</th><th class="p-3 text-left">JAWATAN</th><th class="p-3 text-left">JENIS LATIHAN DIHADIRI</th><th class="p-3 text-left">TARIKH LATIHAN</th><th class="p-3 text-left">ANJURAN</th></tr></thead><tbody>';
+                    rows.forEach((item,idx)=>{
+                        html += '<tr class="border-t border-slate-100 hover:bg-teal-50/40">' +
+                            '<td class="p-3 text-center text-sm text-slate-500">'+(idx+1)+'</td>' +
+                            (showWardColumn ? '<td class="p-3 text-sm font-semibold text-blue-700">'+escapeHTML(item.ward||'—')+'</td>' : '') +
+                            '<td class="p-3 text-sm font-semibold text-slate-800">'+escapeHTML(item.name)+'</td>' +
+                            '<td class="p-3 text-sm">'+escapeHTML(item.position||'—')+'</td>' +
+                            '<td class="p-3 text-sm">'+escapeHTML(item.course||'—')+'</td>' +
+                            '<td class="p-3 text-sm whitespace-nowrap">'+escapeHTML(item.date||'—')+'</td>' +
+                            '<td class="p-3 text-sm">'+escapeHTML(item.organiser||'—')+'</td></tr>';
+                    });
+                    html += '</tbody></table></div>';
+                } else if (model.kind === 'adverse') {
                     const summary = (rows[0] && rows[0].adverseSummary) || model.adverseSummary || {skin:0,fall:0,achievement:0};
                     const totals = rows.reduce((a,r)=>({skin:a.skin+(Number(r.values[0])||0),fall:a.fall+(Number(r.values[1])||0),incidents:a.incidents+(Number(r.values[2])||0)}),{skin:0,fall:0,incidents:0});
                     const fmt = v => Number(v||0).toLocaleString('ms-MY');
@@ -758,8 +787,9 @@
                     html = '<div class="min-h-[300px] flex items-center justify-center text-center text-slate-400"><div><i class="ph ' + (chooseWard ? 'ph-buildings' : 'ph-magnifying-glass') + ' text-4xl"></i><p class="mt-2 font-semibold">' + (chooseWard ? 'Sila pilih wad' : 'Tiada rekod sepadan') + '</p><p class="text-xs mt-1">' + (chooseWard ? 'Pilih satu wad daripada senarai di atas untuk melihat reten.' : 'Cuba ubah carian atau penapis.') + '</p></div></div>';
                 }
                 view.innerHTML = html;
-                document.getElementById('tableSummary').textContent =
-                    rows.length + ' rekod dipaparkan • ' + model.rows.length + ' rekod bagi wad ini • ' + totalWards + ' wad tersedia';
+                document.getElementById('tableSummary').textContent = model.kind === 'attendance'
+                    ? rows.length + ' rekod latihan dipaparkan'
+                    : rows.length + ' rekod dipaparkan • ' + model.rows.length + ' rekod bagi wad ini • ' + totalWards + ' wad tersedia';
             }
 
             function calcCompletion(values) {
