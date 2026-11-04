@@ -700,6 +700,7 @@
 
             function renderTable(model, rows) {
                 const view = document.getElementById('dataView');
+                const showWardColumn = !selectedWardId;
                 let html = '';
 
                 if (model.kind === 'adverse') {
@@ -719,28 +720,28 @@
                     html+='</tbody><tfoot><tr class="border-t-2 border-slate-200 bg-slate-50 font-bold"><td class="p-3 text-sm">JUMLAH</td><td class="p-3 text-center">'+fmt(totals.skin)+'</td><td class="p-3 text-center">'+fmt(totals.fall)+'</td><td class="p-3 text-center bg-orange-100">'+fmt(totals.incidents)+'</td></tr></tfoot></table></div>' +
                         '<div><p class="section-label">RINGKASAN BORANG</p><div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-2"><div class="rounded-xl bg-slate-50 border border-slate-100 p-3"><p class="text-xs text-slate-500">Reaksi kulit akibat debu tayammum</p><p class="text-xl font-bold text-slate-800 mt-1">'+fmt(summary.skin)+'</p></div><div class="rounded-xl bg-slate-50 border border-slate-100 p-3"><p class="text-xs text-slate-500">Pesakit jatuh semasa pengurusan ibadah</p><p class="text-xl font-bold text-slate-800 mt-1">'+fmt(summary.fall)+'</p></div><div class="rounded-xl bg-slate-50 border border-slate-100 p-3"><p class="text-xs text-slate-500">Pencapaian</p><p class="text-xl font-bold text-slate-800 mt-1">'+fmt(summary.achievement)+'</p></div></div></div></div>';
                 } else if (model.kind === 'monthly') {
-                    html = '<table class="hmi-table"><thead><tr><th>Bil</th><th>Nama Wad</th><th style="text-align:left">Item / Perkara</th>';
+                    html = '<table class="hmi-table"><thead><tr><th>Bil</th>' + (showWardColumn ? '<th>Nama Wad</th>' : '') + '<th style="text-align:left">Item / Perkara</th>';
                     model.headers.forEach(h => html += '<th>' + escapeHTML(h) + '</th>');
                     html += '<th>Pencapaian</th><th>Tindakan</th></tr></thead><tbody>';
 
                     rows.forEach((item,idx) => {
                         const pct = calcCompletion(item.values);
                         html += '<tr><td>' + (idx+1) + '</td>';
-                        html += '<td><span class="font-semibold text-blue-700">' + escapeHTML(item.ward || '—') + '</span></td>';
+                        if (showWardColumn) html += '<td><span class="font-semibold text-blue-700">' + escapeHTML(item.ward || '—') + '</span></td>';
                         html += '<td class="item-cell"><div class="item-title">' + escapeHTML(item.name) + '</div><div class="item-sub">' + escapeHTML(item.sub) + '</div></td>';
                         item.values.forEach(v => html += '<td class="text-center">' + statusBadge(v) + '</td>');
                         html += '<td><div class="flex items-center gap-2"><span class="progress-track"><span class="progress-fill" style="width:' + pct + '%"></span></span><b class="text-xs text-slate-700">' + pct + '%</b></div></td>';
                         html += '<td><button class="view-btn" onclick="openDetail(' + idx + ')"><i class="ph ph-eye"></i>Lihat</button></td></tr>';
                     });
                 } else {
-                    html = '<table class="hmi-table"><thead><tr><th>Bil</th><th>Nama Wad</th><th style="text-align:left">Bulan / Rekod</th>';
+                    html = '<table class="hmi-table"><thead><tr><th>Bil</th>' + (showWardColumn ? '<th>Nama Wad</th>' : '') + '<th style="text-align:left">Bulan / Rekod</th>';
                     model.headers.forEach(h => html += '<th>' + escapeHTML(h) + '</th>');
                     html += '<th>Tindakan</th></tr></thead><tbody>';
 
                     rows.forEach((item,idx) => {
                         html += '<tr><td>' + (idx+1) + '</td>';
-                        html += '<td><span class="font-semibold text-blue-700">' + escapeHTML(item.ward || '—') + '</span></td>';
-                        html += '<td class="item-cell"><div class="item-title">' + escapeHTML(item.name) + '</div><div class="item-sub">' + escapeHTML(item.sub) + '</div></td>';
+                        if (showWardColumn) html += '<td><span class="font-semibold text-blue-700">' + escapeHTML(item.ward || '—') + '</span></td>';
+                        html += '<td class="item-cell"><div class="item-title">' + escapeHTML(item.name) + '</div><div class="item-sub">' + escapeHTML(item.sub) + '</div></td>;
                         item.values.forEach((v,i) => {
                             let display = v;
                             if (i === model.headers.length-1 && percentValue(v) !== null) display = Math.round(percentValue(v)) + '%';
