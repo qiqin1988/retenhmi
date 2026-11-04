@@ -629,23 +629,34 @@
 
             function parseAttendance(rows) {
                 const data=[];
+                const clean=v=>String(v??'').trim();
                 for(let i=0;i<rows.length;i++){
-                    const r=rows[i]||[];
-                    const bil=String(r[0]??'').trim();
-                    const name=String(r[1]??'').trim();
-                    // Ambil hanya baris staf sebenar: nombor bil dan nama staf mesti wujud.
-                    if(name && /^\\d+$/.test(bil)){
-                        data.push({
-                            bil:bil,
-                            name:name,
-                            position:String(r[2]??'').trim(),
-                            ward:String(r[3]??'').trim(),
-                            course:String(r[4]??'').trim(),
-                            date:String(r[5]??'').trim(),
-                            organiser:String(r[6]??'').trim(),
-                            raw:r
-                        });
+                    const r=Array.isArray(rows[i])?rows[i]:[];
+                    // Cari pasangan nombor bil + nama staf pada mana-mana dua kolum bersebelahan.
+                    // Sesetengah fail reten bermula dari kolum A, sesetengahnya dari kolum B.
+                    let bilIndex=-1;
+                    for(let c=0;c<Math.min(r.length-1,3);c++){
+                        if(/^\\d+(?:\\.0)?$/.test(clean(r[c])) && clean(r[c+1])){
+                            bilIndex=c;
+                            break;
+                        }
                     }
+                    if(bilIndex<0) continue;
+                    const nameIndex=bilIndex+1;
+                    const name=clean(r[nameIndex]);
+                    // Abaikan tajuk jadual dan baris kosong.
+                    if(!name || /^(NAMA STAF|NAMA|BIL)$/i.test(name)) continue;
+                    const position=clean(r[nameIndex+1]);
+                    const ward=clean(r[nameIndex+2]);
+                    const course=clean(r[nameIndex+3]);
+                    const date=clean(r[nameIndex+4]);
+                    const organiser=clean(r[nameIndex+5]);
+                    // Rekod staf mesti mempunyai sekurang-kurangnya nama dan satu butiran latihan.
+                    if(!position && !ward && !course && !date && !organiser) continue;
+                    data.push({
+                        bil:clean(r[bilIndex]),
+                        name,position,ward,course,date,organiser,raw:r
+                    });
                 }
                 return {kind:'attendance',headers:['Nama Staf','Jawatan','Wad','Jenis Latihan Dihadiri','Tarikh Latihan','Anjuran'],rows:data,title:'Kehadiran Kursus'};
             }
