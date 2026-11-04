@@ -581,28 +581,33 @@
 
             function parsePrivileging(rows) {
                 const data=[];
-                // Ambil rekod bulan JANUARI hingga DISEMBER sahaja.
-                // Elakkan baris "Disediakan oleh" / "Disahkan oleh"
-                // yang sebelum ini tersalah dibaca sebagai bulan DIS.
-                const monthPattern = /^(JAN|JANUARI|FEB|FEBRUARI|MAC|APR|APRIL|MEI|MAY|JUN|JUL|JULAI|OGO|OGOS|SEPT|SEPTEMBER|OKT|OKTOBER|NOV|NOVEMBER|DIS|DISEMBER)$/i;
+                // Reten Privileging 2023 menggunakan sel gabungan:
+                // A=Bulan, B=Bilangan staf diberi privileging,
+                // E=Bilangan staf Muslim, G=Staf diberi privileging untuk peranan HMI.
+                // Nilai sel gabungan hanya muncul pada indeks pertama setiap julat.
+                const isYear2023 = String(selectedYear) === '2023';
+                const monthPattern = /^(JAN|JANUARI|FEB|FEBRUARI|MAC|MAR|APR|APRIL|MEI|MAY|JUN|JUL|JULAI|OGO|OGOS|SEPT|SEPTEMBER|OKT|OKTOBER|NOV|NOVEMBER|DIS|DISEMBER)$/i;
 
                 for(let i=0;i<rows.length;i++){
                     const r=rows[i]||[];
                     const label=String(r[0]||'').trim().toUpperCase();
-
                     if(!monthPattern.test(label)) continue;
+
+                    const values = isYear2023
+                        ? [r[1], r[4], r[6]]
+                        : [r[1], r[2], r[3]];
 
                     data.push({
                         name: label,
                         sub: 'Privileging staf dalam program HMI',
-                        values: [r[1], r[2], r[3]],
+                        values,
                         raw: r
                     });
                 }
 
                 return {
                     kind:'monthlyMetric',
-                    headers:['Staf dilantik','Staf Islam','Peratusan'],
+                    headers:['Bilangan staf diberi privileging','Bilangan staf Muslim','Staf diberi privileging untuk peranan HMI'],
                     rows:data.slice(0,12),
                     title:'Privileging'
                 };
