@@ -539,7 +539,9 @@
                 for(let i=headerIndex+1;i<rows.length;i++){
                     const r=rows[i]||[];
                     const name=String(r[0]||'').trim();
-                    if(!name || /^(KUMULATIF|%|NUMERATOR|DENOMINATOR|DISEDIAKAN|DISAHKAN)/i.test(name)) continue;
+                    // Abaikan baris ringkasan/tandatangan di bawah jadual bulanan.
+                    // Baris "Pencapaian kemudahan..." bukan item kemudahan.
+                    if(!name || /^(KUMULATIF|%|NUMERATOR|DENOMINATOR|PENCAPAIAN|DISEDIAKAN|DISEMAK|DISAHKAN)/i.test(name)) continue;
                     if(name.length>60 && !months.some(m=>String(m).trim())) continue;
                     const vals=r.slice(1,13);
                     if(vals.some(v=>String(v??'').trim()!=='')) data.push({name,sub:'Kemudahan & peralatan HMI',values:vals,raw:r});
