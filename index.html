@@ -227,7 +227,7 @@
     </style>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const API_URL = 'https://script.google.com/macros/s/AKfycbwFYEfgA4TZlQDgSIQnHIB3QQHbngoy5Jn86UV0YFH977Gb7Ya9h8TzcgAiQhZ-Dsmv/exec';
+            window.HMI_API_URL = 'https://script.google.com/macros/s/AKfycbwFYEfgA4TZlQDgSIQnHIB3QQHbngoy5Jn86UV0YFH977Gb7Ya9h8TzcgAiQhZ-Dsmv/exec';
             let allHMIData = [];
             let allCategories = [];
             let selectedTab = '';
@@ -284,7 +284,7 @@
                         cleanup();
                         reject(new Error('Pelayar gagal memuatkan respons Apps Script. Semak deployment atau saiz data API.'));
                     };
-                    script.src = API_URL + '?' + query.toString();
+                    script.src = window.HMI_API_URL + '?' + query.toString();
                     document.body.appendChild(script);
                 });
             }
@@ -1107,7 +1107,7 @@
                 button.disabled = true;
                 button.textContent = 'Menyemak...';
                 setAdminLoginMessage('', '');
-                document.getElementById('hmiAdminPostForm').action = API_URL;
+                document.getElementById('hmiAdminPostForm').action = window.HMI_API_URL;
                 document.getElementById('hmiAdminPostPassword').value = password;
                 document.getElementById('hmiAdminPostForm').submit();
                 document.getElementById('adminPasswordInput').value = '';
