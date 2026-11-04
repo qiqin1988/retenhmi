@@ -560,10 +560,21 @@
 
             function parseLatihan(rows) {
                 const data=[];
+                const isYear2023 = String(selectedYear) === '2023';
+                const toNumber = value => {
+                    const n = Number(String(value ?? '').replace(/,/g,'').trim());
+                    return Number.isFinite(n) ? n : 0;
+                };
                 for(let i=0;i<rows.length;i++){
                     const r=rows[i]||[], label=String(r[1]||'').trim();
                     if(/^(JANUARI|FEBRUARI|MAC|APRIL|MEI|JUN|JULAI|OGOS|SEPTEMBER|OKTOBER|NOVEMBER|DISEMBER)/i.test(label)){
-                        data.push({name:label,sub:'Latihan HMI • Jururawat / PPK',values:[r[2],r[3],r[4],r[5]],raw:r});
+                        // Format reten 2023: C=Jururawat Islam, D=PPK Islam,
+                        // E=Jururawat hadir, F=PPK hadir, H=Peratusan.
+                        // Jumlah staf Islam ialah C+D; jangan gunakan jumlah tahunan pada setiap bulan.
+                        const values = isYear2023
+                            ? [toNumber(r[2]) + toNumber(r[3]), r[4], r[5], r[7]]
+                            : [r[2],r[3],r[4],r[5]];
+                        data.push({name:label,sub:'Latihan HMI • Jururawat / PPK',values,raw:r});
                     }
                 }
                 return {kind:'monthlyMetric',headers:['Staf Islam','Jururawat hadir','PPK hadir','Peratusan'],rows:data,title:'Latihan HMI'};
