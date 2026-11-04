@@ -513,7 +513,19 @@
                 filteredRows = combinedRows;
                 window.currentModel = model;
                 applyFilters();
-                renderCharts(model);
+                const chartSection=document.getElementById('allWardsPie')?.closest('section');
+                const statusControl=document.getElementById('statusFilter');
+                const monthControl=document.getElementById('monthFilter');
+                if(tab==='DATA KEHADIRAN KURSUS') {
+                    if(chartSection) chartSection.style.display='none';
+                    if(statusControl) statusControl.style.display='none';
+                    if(monthControl) monthControl.style.display='none';
+                } else {
+                    if(chartSection) chartSection.style.display='';
+                    if(statusControl) statusControl.style.display='';
+                    if(monthControl) monthControl.style.display='';
+                    renderCharts(model);
+                }
             }
 
             function parseKemudahan(rows) {
@@ -685,11 +697,11 @@
                 const status=document.getElementById('statusFilter')?.value||'all';
                 const month=document.getElementById('monthFilter')?.value||'all';
                 let rows=model.rows.filter(item=>{
-                    if(q && !(item.ward+' '+item.name+' '+item.sub+' '+item.values.join(' ')).toLowerCase().includes(q)) return false;
+                    if(q && ![item.ward,item.name,item.sub,item.position,item.course,item.date,item.organiser,item.values?.join(' ')].filter(Boolean).join(' ').toLowerCase().includes(q)) return false;
 
                     // Kategori berbentuk senarai bulan (Orientasi, Latihan, Privileging):
                     // tapis berdasarkan nama rekod/bulan, bukan indeks lajur.
-                    if((model.kind==='monthlyMetric' || model.kind==='adverse') && month!=='all') {
+                    if(model.kind!=='attendance' && (model.kind==='monthlyMetric' || model.kind==='adverse') && month!=='all') {
                         if(monthIndexFromLabel(item.name)!==Number(month)) return false;
                     }
 
@@ -698,7 +710,7 @@
                         const v=item.values[Number(month)];
                         if(String(v??'').trim()==='') return false;
                         if(status!=='all' && statusType(v)!==status) return false;
-                    } else if(status!=='all' && model.kind!=='adverse') {
+                    } else if(status!=='all' && model.kind!=='adverse' && model.kind!=='attendance') {
                         const types=item.values.map(statusType);
                         if(!types.includes(status)) return false;
                     }
@@ -712,6 +724,10 @@
             window.applyFilters = applyFilters;
 
             function updateSelectedKPI(model, rows) {
+                if(model.kind==='attendance') {
+                    updateKPI({complete:0,incomplete:0,total:0});
+                    return;
+                }
                 let k={complete:0,incomplete:0,total:0};
                 rows.forEach(item=>item.values.forEach(v=>{
                     const t=statusType(v);
