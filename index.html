@@ -857,11 +857,9 @@
                     let result, wards;
                     if (selectedYear === '2025') {
                         allCategories = ['KEMUDAHAN','ORIENTASI','LATIHAN','PRIVILEGING','ADVERSE EVENT','DATA KEHADIRAN KURSUS'];
-                        result = yearCategoryCache['KEMUDAHAN'] || await callAPI({action:'getCategoryAll2025',category:'KEMUDAHAN'});
+                        result = await callAPI({action:'list2025'});
                         if (!result || !result.success || !Array.isArray(result.wards)) throw new Error((result && result.message) || 'Senarai wad tahun 2025 tidak dapat dibaca.');
-                        yearCategoryCache['KEMUDAHAN'] = result;
-                        allWardChartCache['KEMUDAHAN'] = result.wards.filter(w => w && w.success);
-                        wards = result.wards.filter(w => w && w.success).map(w => ({id:w.name,name:w.name}));
+                        wards = result.wards.map(w => ({id:w.id || w.name,name:w.name}));
                     } else {
                         result = await callAPI({action:'list'});
                         if (!result || !result.success || !Array.isArray(result.wards)) throw new Error((result && result.message) || 'Senarai wad tidak dapat dibaca.');
