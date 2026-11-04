@@ -61,7 +61,7 @@
                 <div class="min-w-0">
                     <p class="text-[10px] sm:text-xs font-bold tracking-[.12em] text-teal-700 uppercase">Hospital Pulau Pinang</p>
                     <h1 class="brand-heading text-base sm:text-xl font-bold text-slate-900 leading-tight truncate">Program Hospital Mesra Ibadah (HMI)</h1>
-                    <p class="hidden sm:block text-xs text-slate-500">Dashboard Pemantauan Reten • 2026</p>
+                    <p id="navYearLabel" class="hidden sm:block text-xs text-slate-500">Dashboard Pemantauan Reten • 2026</p>
                 </div>
             </div>
             <div class="flex items-center gap-2 sm:gap-4">
@@ -78,10 +78,10 @@
                 <div>
                     <div class="flex flex-wrap items-center gap-2 mb-3">
                         <span class="badge-soft"><i class="ph-fill ph-shield-check"></i> RETEN HMI</span>
-                        <span class="text-xs font-semibold text-white/70">TAHUN PEMANTAUAN 2026</span>
+                        <span id="heroYearLabel" class="text-xs font-semibold text-white/70">TAHUN PEMANTAUAN 2026</span>
                     </div>
                     <h2 class="dashboard-heading text-2xl sm:text-4xl font-bold text-white tracking-tight">Pemantauan Hospital Mesra Ibadah (HMI)</h2>
-                    <p class="text-sm sm:text-base text-white/75 mt-2 max-w-2xl">Pemantauan berpusat pelaksanaan dan pencapaian Program Hospital Mesra Ibadah bagi tahun 2026.</p>
+                    <p id="heroYearDescription" class="text-sm sm:text-base text-white/75 mt-2 max-w-2xl">Pemantauan berpusat pelaksanaan dan pencapaian Program Hospital Mesra Ibadah bagi tahun 2026.</p>
                 </div>
                 <div class="flex flex-wrap gap-2">
                     <button onclick="fetchTabList()" class="action-btn light"><i class="ph ph-arrows-clockwise"></i> Segar Semula</button>
@@ -874,6 +874,9 @@
                     const wardFilter = document.getElementById('wardFilter');
                     wardFilter.innerHTML = '<option value="">Pilih Wad (' + totalWards + ' tersedia)</option>' +
                         wards.map(w => '<option value="' + escapeHTML(w.id) + '">' + escapeHTML(w.name) + '</option>').join('');
+                    document.getElementById('navYearLabel').textContent = 'Dashboard Pemantauan Reten • ' + selectedYear;
+                    document.getElementById('heroYearLabel').textContent = 'TAHUN PEMANTAUAN ' + selectedYear;
+                    document.getElementById('heroYearDescription').textContent = 'Pemantauan berpusat pelaksanaan dan pencapaian Program Hospital Mesra Ibadah bagi tahun ' + selectedYear + '.';
                     document.getElementById('kpiTabs').textContent = allCategories.length;
                     document.getElementById('kpiRows').textContent = totalWards;
                     document.getElementById('dataSubtitle').textContent = totalWards + ' wad tersedia • Tahun ' + selectedYear;
