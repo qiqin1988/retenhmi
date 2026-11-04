@@ -115,6 +115,7 @@
                         </div>
                     </div>
                     <div class="flex flex-col sm:flex-row gap-2 w-full xl:w-auto">
+                        <select id="yearFilter" class="filter-control" onchange="changeYear(this.value)" aria-label="Pilih tahun"><option value="2026">Tahun 2026</option><option value="2025">Tahun 2025</option></select>
                         <select id="wardFilter" class="filter-control" onchange="selectWard(this.value)" aria-label="Pilih wad">
                             <option value="">Pilih Wad</option>
                         </select>
@@ -226,12 +227,14 @@
     </style>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const API_URL = 'https://script.google.com/macros/s/AKfycbwWUq-KQiwxE7mhwBehBpc2neAawARNJfClH-lZlcNZUjKTodV7FWgoisW0jAOyyxTF/exec';
+            const API_URL = 'https://script.google.com/macros/s/AKfycbxLYc62SfxBOKAsNOkuJ5ygx7doQqAGHWklErm9vswJ6Kes6smxqzLMoaWxJwnizVuF/exec';
             let allHMIData = [];
             let allCategories = [];
             let selectedTab = '';
             let selectedWardId = '';
+            let selectedYear = '2026';
             let totalWards = 0;
+            const yearCategoryCache = {};
             let loadSequence = 0;
             const wardCategoryCache = {};
             let filteredRows = [];
@@ -243,8 +246,8 @@
                 'ORIENTASI': { icon:'ph-chalkboard-teacher', label:'Orientasi', desc:'Penerangan program HMI' },
                 'LATIHAN': { icon:'ph-student', label:'Latihan', desc:'Latihan HMI & bidang berkaitan' },
                 'PRIVILEGING': { icon:'ph-certificate', label:'Privileging', desc:'Staf yang diberi privileging' },
-                'adverse event': { icon:'ph-warning', label:'Adverse Event', desc:'Kejadian semasa pengurusan ibadah' },
-                'Data Kehadiran Kursus': { icon:'ph-users-three', label:'Kehadiran Kursus', desc:'Senarai staf & kursus' }
+                'ADVERSE EVENT': { icon:'ph-warning', label:'Adverse Event', desc:'Kejadian semasa pengurusan ibadah' },
+                'DATA KEHADIRAN KURSUS': { icon:'ph-users-three', label:'Kehadiran Kursus', desc:'Senarai staf & kursus' }
             };
 
             function escapeHTML(value) {
@@ -265,8 +268,8 @@
                         if (settled) return;
                         settled = true;
                         cleanup();
-                        reject(new Error('Masa menunggu API tamat. Respons data 36 wad mengambil masa terlalu lama atau terlalu besar.'));
-                    }, 45000);
+                        reject(new Error('Masa menunggu API tamat. Data semua wad mungkin mengambil masa beberapa minit untuk diproses.'));
+                    }, 180000);
                     window[callbackName] = data => {
                         if (settled) return;
                         settled = true;
@@ -304,6 +307,17 @@
                     nav.appendChild(btn);
                 });
             }
+
+            async function changeYear(year) {
+                selectedYear = String(year || '2026');
+                selectedWardId = '';
+                Object.keys(wardCategoryCache).forEach(k => delete wardCategoryCache[k]);
+                Object.keys(allWardChartCache).forEach(k => delete allWardChartCache[k]);
+                Object.keys(yearCategoryCache).forEach(k => delete yearCategoryCache[k]);
+                document.getElementById('yearFilter').value = selectedYear;
+                await fetchTabList();
+            }
+            window.changeYear = changeYear;
 
             function selectTab(name) {
                 selectedTab = name;
@@ -345,14 +359,24 @@
 
                 try {
                     let ward;
-                    if (wardCategoryCache[cacheKey]) {
+                    if (selectedYear === '2025') {
+                        let categoryResult = yearCategoryCache[selectedTab];
+                        if (!categoryResult) {
+                            const result = await callAPI({action:'getCategoryAll2025', category:selectedTab});
+                            if (sequence !== loadSequence) return;
+                            if (!result || !result.success || !Array.isArray(result.wards)) throw new Error((result && result.message) || 'Data tahun 2025 tidak dapat dibaca.');
+                            categoryResult = result;
+                            yearCategoryCache[selectedTab] = result;
+                            allWardChartCache[selectedTab] = result.wards.filter(w => w && w.success);
+                        }
+                        ward = categoryResult.wards.find(w => w.name === selectedWardId && w.success);
+                        if (!ward) throw new Error('Data kategori ini tiada untuk wad yang dipilih.');
+                    } else if (wardCategoryCache[cacheKey]) {
                         ward = wardCategoryCache[cacheKey];
                     } else {
                         const result = await callAPI({action:'getWard', id:selectedWardId, category:selectedTab});
                         if (sequence !== loadSequence) return;
-                        if (!result || !result.success || !result.ward) {
-                            throw new Error((result && result.message) || 'Data wad tidak dapat dibaca.');
-                        }
+                        if (!result || !result.success || !result.ward) throw new Error((result && result.message) || 'Data wad tidak dapat dibaca.');
                         ward = result.ward;
                         wardCategoryCache[cacheKey] = ward;
                     }
@@ -829,30 +853,37 @@
             async function fetchTabList(){
                 const view = document.getElementById('dataView');
                 try {
-                    view.innerHTML = '<div class="min-h-[300px] flex items-center justify-center text-slate-400"><div class="text-center"><i class="ph ph-spinner-gap animate-spin text-4xl text-blue-500"></i><p class="mt-3 font-medium">Memuatkan senarai wad...</p></div></div>';
-
-                    const result = await callAPI({action:'list'});
-                    if (!result || !result.success || !Array.isArray(result.wards)) {
-                        throw new Error((result && result.message) || 'Senarai wad tidak dapat dibaca.');
+                    view.innerHTML = '<div class="min-h-[300px] flex items-center justify-center text-slate-400"><div class="text-center"><i class="ph ph-spinner-gap animate-spin text-4xl text-blue-500"></i><p class="mt-3 font-medium">Memuatkan senarai wad tahun ' + selectedYear + '...</p></div></div>';
+                    let result, wards;
+                    if (selectedYear === '2025') {
+                        allCategories = ['KEMUDAHAN','ORIENTASI','LATIHAN','PRIVILEGING','ADVERSE EVENT','DATA KEHADIRAN KURSUS'];
+                        result = yearCategoryCache['KEMUDAHAN'] || await callAPI({action:'getCategoryAll2025',category:'KEMUDAHAN'});
+                        if (!result || !result.success || !Array.isArray(result.wards)) throw new Error((result && result.message) || 'Senarai wad tahun 2025 tidak dapat dibaca.');
+                        yearCategoryCache['KEMUDAHAN'] = result;
+                        allWardChartCache['KEMUDAHAN'] = result.wards.filter(w => w && w.success);
+                        wards = result.wards.filter(w => w && w.success).map(w => ({id:w.name,name:w.name}));
+                    } else {
+                        result = await callAPI({action:'list'});
+                        if (!result || !result.success || !Array.isArray(result.wards)) throw new Error((result && result.message) || 'Senarai wad tidak dapat dibaca.');
+                        wards = result.wards;
+                        allCategories = Array.isArray(result.categories) ? result.categories : ['KEMUDAHAN','ORIENTASI','LATIHAN','PRIVILEGING','ADVERSE EVENT','DATA KEHADIRAN KURSUS'];
                     }
-
-                    totalWards = result.wards.length;
+                    totalWards = wards.length;
                     allHMIData = [];
-                    allCategories = Array.isArray(result.categories) ? result.categories : ['KEMUDAHAN','ORIENTASI','LATIHAN','PRIVILEGING'];
-
+                    selectedWardId = '';
                     const wardFilter = document.getElementById('wardFilter');
                     wardFilter.innerHTML = '<option value="">Pilih Wad (' + totalWards + ' tersedia)</option>' +
-                        result.wards.map(w => '<option value="' + escapeHTML(w.id) + '">' + escapeHTML(w.name) + '</option>').join('');
-
+                        wards.map(w => '<option value="' + escapeHTML(w.id) + '">' + escapeHTML(w.name) + '</option>').join('');
                     document.getElementById('kpiTabs').textContent = allCategories.length;
                     document.getElementById('kpiRows').textContent = totalWards;
-                    document.getElementById('dataSubtitle').textContent = totalWards + ' wad tersedia • Data dimuatkan apabila dipilih';
-
+                    document.getElementById('dataSubtitle').textContent = totalWards + ' wad tersedia • Tahun ' + selectedYear;
                     selectedTab = allCategories.includes(selectedTab) ? selectedTab : (allCategories[0] || '');
                     buildCategoryNav();
                     window.currentModel = null;
-                    view.innerHTML = '<div class="min-h-[300px] flex items-center justify-center text-center text-slate-400"><div><i class="ph ph-hand-point-up text-4xl"></i><p class="mt-2 font-semibold">Pilih wad untuk bermula</p><p class="text-xs mt-1">Data akan dimuatkan mengikut wad dan kategori yang dipilih.</p></div></div>';
-                    document.getElementById('tableSummary').textContent = totalWards + ' wad tersedia';
+                    view.innerHTML = '<div class="min-h-[300px] flex items-center justify-center text-center text-slate-400"><div><i class="ph ph-hand-point-up text-4xl"></i><p class="mt-2 font-semibold">Pilih wad untuk bermula</p><p class="text-xs mt-1">Data tahun ' + selectedYear + ' akan dimuatkan mengikut wad dan kategori.</p></div></div>';
+                    document.getElementById('tableSummary').textContent = totalWards + ' wad tersedia • Tahun ' + selectedYear;
+                    document.getElementById('allPieSubtitle').textContent = 'Ringkasan semua wad • ' + selectedYear;
+                    document.getElementById('allBarSubtitle').textContent = 'Perbandingan pencapaian semua wad • ' + selectedYear;
                 } catch(error) {
                     view.innerHTML = '<div class="min-h-[300px] flex items-center justify-center p-6"><div class="text-center max-w-md"><div class="w-14 h-14 mx-auto rounded-2xl bg-rose-50 text-rose-500 flex items-center justify-center"><i class="ph ph-warning-octagon text-2xl"></i></div><h3 class="font-bold text-slate-800 mt-3">Gagal Memuatkan Senarai Wad</h3><p class="text-sm text-slate-500 mt-1">' + escapeHTML(error.message || String(error)) + '</p><button class="view-btn mt-4" onclick="fetchTabList()">Cuba Lagi</button></div></div>';
                     console.error(error);
