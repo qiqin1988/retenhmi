@@ -824,6 +824,25 @@
                         });
                         html += '<td><button class="view-btn" onclick="openDetail(' + idx + ')"><i class="ph ph-eye"></i>Lihat</button></td></tr>';
                     });
+                    if (model.title === 'Privileging' && rows.length) {
+                        const sumAt = index => rows.reduce((total, item) => {
+                            const value = Number(String(item.values[index] ?? '').replace(/,/g,'').replace('%','').trim());
+                            return total + (Number.isFinite(value) ? value : 0);
+                        }, 0);
+                        const fmtTotal = value => Number.isInteger(value) ? String(value) : value.toLocaleString('ms-MY');
+                        // Jumlah tahunan: staf dilantik dan peranan HMI dijumlahkan;
+                        // bilangan staf Islam ialah populasi bulanan, bukan jumlah 12 bulan.
+                        const appointedTotal = sumAt(0);
+                        const muslimTotal = rows.length ? rows[0].values[1] : '—';
+                        const hmiRoleTotal = sumAt(2);
+                        html += '<tr class="border-t-2 border-slate-200 bg-slate-50 font-bold"><td></td>' +
+                            (showWardColumn ? '<td></td>' : '') +
+                            '<td class="item-cell">JUMLAH</td>' +
+                            '<td class="text-center">' + fmtTotal(appointedTotal) + '</td>' +
+                            '<td class="text-center">' + escapeHTML(muslimTotal ?? '—') + '</td>' +
+                            '<td class="text-center">' + fmtTotal(hmiRoleTotal) + '</td>' +
+                            '<td></td></tr>';
+                    }
                 }
 
                 html += '</tbody></table>';
