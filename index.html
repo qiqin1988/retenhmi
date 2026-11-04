@@ -673,7 +673,7 @@
                         const v=item.values[Number(month)];
                         if(String(v??'').trim()==='') return false;
                         if(status!=='all' && statusType(v)!==status) return false;
-                    } else if(status!=='all') {
+                    } else if(status!=='all' && model.kind!=='adverse') {
                         const types=item.values.map(statusType);
                         if(!types.includes(status)) return false;
                     }
@@ -815,6 +815,8 @@
             function renderCharts(model) {
                 const chartSection = document.getElementById('allWardsPie')?.closest('section');
                 if (chartSection) chartSection.style.display = model.kind === 'adverse' ? 'none' : '';
+                const statusControl = document.getElementById('statusFilter');
+                if (statusControl) statusControl.style.display = model.kind === 'adverse' ? 'none' : '';
                 const category = model.category || selectedTab;
                 const selectedName = document.getElementById('wardFilter').selectedOptions[0]?.textContent || 'Wad dipilih';
                 const selectedScore = scoreForModel(model);
