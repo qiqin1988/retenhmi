@@ -846,6 +846,22 @@
                 }
 
                 html += '</tbody></table>';
+                if (model.title === 'Privileging' && rows.length) {
+                    const total = index => rows.reduce((sum, item) => {
+                        const n = Number(String(item.values[index] ?? '').replace(/,/g,'').replace('%','').trim());
+                        return sum + (Number.isFinite(n) ? n : 0);
+                    }, 0);
+                    const numerator = total(0);
+                    const denominator = Number(String(rows[0].values[1] ?? '').replace(/,/g,'').trim()) || 0;
+                    const hmiRoleTotal = total(2);
+                    const achievement = denominator ? (numerator / denominator * 100) : 0;
+                    html += '<div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">' +
+                        '<div class="rounded-xl border border-slate-200 overflow-hidden">' +
+                        '<div class="grid grid-cols-[110px_1fr_auto] border-b border-slate-100"><div class="p-3 font-semibold bg-slate-50">Numerator</div><div class="p-3">Jumlah kakitangan yang diberikan privileging</div><div class="p-3 font-bold text-right">' + numerator + '</div></div>' +
+                        '<div class="grid grid-cols-[110px_1fr_auto]"><div class="p-3 font-semibold bg-slate-50">Denominator</div><div class="p-3">Jumlah kakitangan Muslim</div><div class="p-3 font-bold text-right">' + denominator + '</div></div>' +
+                        '</div><div class="flex items-center justify-end gap-3 rounded-xl border border-slate-200 p-3"><span class="font-semibold">Pencapaian</span><strong class="text-blue-700">' + achievement.toFixed(2) + '%</strong></div>' +
+                        '</div>';
+                }
                 if (!rows.length) {
                     const chooseWard = !document.getElementById('wardFilter')?.value;
                     html = '<div class="min-h-[300px] flex items-center justify-center text-center text-slate-400"><div><i class="ph ' + (chooseWard ? 'ph-buildings' : 'ph-magnifying-glass') + ' text-4xl"></i><p class="mt-2 font-semibold">' + (chooseWard ? 'Sila pilih wad' : 'Tiada rekod sepadan') + '</p><p class="text-xs mt-1">' + (chooseWard ? 'Pilih satu wad daripada senarai di atas untuk melihat reten.' : 'Cuba ubah carian atau penapis.') + '</p></div></div>';
