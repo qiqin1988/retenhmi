@@ -770,7 +770,7 @@
                     rows.forEach((item,idx) => {
                         html += '<tr><td>' + (idx+1) + '</td>';
                         if (showWardColumn) html += '<td><span class="font-semibold text-blue-700">' + escapeHTML(item.ward || '—') + '</span></td>';
-                        html += '<td class="item-cell"><div class="item-title">' + escapeHTML(item.name) + '</div><div class="item-sub">' + escapeHTML(item.sub) + '</div></td>;
+                        html += '<td class="item-cell"><div class="item-title">' + escapeHTML(item.name) + '</div><div class="item-sub">' + escapeHTML(item.sub) + '</div></td>';
                         item.values.forEach((v,i) => {
                             let display = v;
                             if (i === model.headers.length-1 && percentValue(v) !== null) display = Math.round(percentValue(v)) + '%';
