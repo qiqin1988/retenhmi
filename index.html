@@ -115,7 +115,7 @@
                         </div>
                     </div>
                     <div class="flex flex-col sm:flex-row gap-2 w-full xl:w-auto">
-                        <select id="yearFilter" class="filter-control" onchange="changeYear(this.value)" aria-label="Pilih tahun"><option value="2026">Tahun 2026</option><option value="2025">Tahun 2025</option></select>
+                        <select id="yearFilter" class="filter-control" onchange="changeYear(this.value)" aria-label="Pilih tahun"><option value="2026">Tahun 2026</option><option value="2025">Tahun 2025</option><option value="2024">Tahun 2024</option><option value="2023">Tahun 2023</option></select>
                         <select id="wardFilter" class="filter-control" onchange="selectWard(this.value)" aria-label="Pilih wad">
                             <option value="">Pilih Wad</option>
                         </select>
@@ -359,13 +359,14 @@
 
                 try {
                     let ward;
-                    if (selectedYear === '2025') {
+                    if (selectedYear !== '2026') {
                         if (wardCategoryCache[cacheKey]) {
                             ward = wardCategoryCache[cacheKey];
                         } else {
-                            const result = await callAPI({action:'getWard2025', id:selectedWardId, category:selectedTab});
+                            const action = 'getWard' + selectedYear;
+                            const result = await callAPI({action:action, id:selectedWardId, category:selectedTab});
                             if (sequence !== loadSequence) return;
-                            if (!result || !result.success || !result.ward) throw new Error((result && result.message) || 'Data tahun 2025 tidak dapat dibaca.');
+                            if (!result || !result.success || !result.ward) throw new Error((result && result.message) || 'Data tahun ' + selectedYear + ' tidak dapat dibaca.');
                             ward = result.ward;
                             wardCategoryCache[cacheKey] = ward;
                         }
@@ -518,7 +519,7 @@
                     if(chartSection) chartSection.style.display='none';
                     if(statusControl) statusControl.style.display='none';
                     if(monthControl) monthControl.style.display='none';
-                } else if(selectedYear==='2025') {
+                } else if(selectedYear!=='2026') {
                     if(chartSection) chartSection.style.display='none';
                     if(statusControl) statusControl.style.display='';
                     if(monthControl) monthControl.style.display='';
@@ -970,10 +971,10 @@
                 try {
                     view.innerHTML = '<div class="min-h-[300px] flex items-center justify-center text-slate-400"><div class="text-center"><i class="ph ph-spinner-gap animate-spin text-4xl text-blue-500"></i><p class="mt-3 font-medium">Memuatkan senarai wad tahun ' + selectedYear + '...</p></div></div>';
                     let result, wards;
-                    if (selectedYear === '2025') {
+                    if (selectedYear !== '2026') {
                         allCategories = ['KEMUDAHAN','ORIENTASI','LATIHAN','PRIVILEGING','ADVERSE EVENT','DATA KEHADIRAN KURSUS'];
-                        result = await callAPI({action:'list2025'});
-                        if (!result || !result.success || !Array.isArray(result.wards)) throw new Error((result && result.message) || 'Senarai wad tahun 2025 tidak dapat dibaca.');
+                        result = await callAPI({action:'list' + selectedYear});
+                        if (!result || !result.success || !Array.isArray(result.wards)) throw new Error((result && result.message) || 'Senarai wad tahun ' + selectedYear + ' tidak dapat dibaca.');
                         wards = result.wards.map(w => ({id:w.id || w.name,name:w.name}));
                     } else {
                         result = await callAPI({action:'list'});
