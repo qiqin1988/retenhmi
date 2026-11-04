@@ -360,17 +360,15 @@
                 try {
                     let ward;
                     if (selectedYear === '2025') {
-                        let categoryResult = yearCategoryCache[selectedTab];
-                        if (!categoryResult) {
-                            const result = await callAPI({action:'getCategoryAll2025', category:selectedTab});
+                        if (wardCategoryCache[cacheKey]) {
+                            ward = wardCategoryCache[cacheKey];
+                        } else {
+                            const result = await callAPI({action:'getWard2025', id:selectedWardId, category:selectedTab});
                             if (sequence !== loadSequence) return;
-                            if (!result || !result.success || !Array.isArray(result.wards)) throw new Error((result && result.message) || 'Data tahun 2025 tidak dapat dibaca.');
-                            categoryResult = result;
-                            yearCategoryCache[selectedTab] = result;
-                            allWardChartCache[selectedTab] = result.wards.filter(w => w && w.success);
+                            if (!result || !result.success || !result.ward) throw new Error((result && result.message) || 'Data tahun 2025 tidak dapat dibaca.');
+                            ward = result.ward;
+                            wardCategoryCache[cacheKey] = ward;
                         }
-                        ward = categoryResult.wards.find(w => w.name === selectedWardId && w.success);
-                        if (!ward) throw new Error('Data kategori ini tiada untuk wad yang dipilih.');
                     } else if (wardCategoryCache[cacheKey]) {
                         ward = wardCategoryCache[cacheKey];
                     } else {
