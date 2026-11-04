@@ -65,9 +65,9 @@
                 </div>
             </div>
             <div class="flex items-center gap-2 sm:gap-4">
-                <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white border border-teal-100 shadow-sm flex items-center justify-center text-blue-700 font-bold">
-                    <i class="ph ph-user text-xl"></i>
-                </div>
+                <button type="button" id="adminLoginButton" onclick="openAdminLogin()" aria-label="Log masuk Admin" title="Log masuk Admin" class="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white border border-teal-100 shadow-sm flex items-center justify-center text-blue-700 font-bold hover:bg-teal-50 hover:shadow-md transition">
+                    <i id="adminLoginIcon" class="ph ph-user text-xl"></i>
+                </button>
             </div>
         </div>
     </nav>
@@ -1072,7 +1072,76 @@
             window.fetchTabList=fetchTabList;
             fetchTabList();
         });
-    </script>
+    
+            
+            // ADMIN LOGIN: pengesahan dibuat di Apps Script, bukan di browser.
+            let adminLoginPending = false;
+            function openAdminLogin() {
+                const modal = document.getElementById('adminLoginModal');
+                const loggedIn = !!sessionStorage.getItem('hmiAdminToken');
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                document.getElementById('adminLoginForm').classList.toggle('hidden', loggedIn);
+                document.getElementById('adminLogoutButton').classList.toggle('hidden', !loggedIn);
+                setAdminLoginMessage(loggedIn ? 'Admin telah log masuk pada sesi ini.' : '', 'success');
+                if (!loggedIn) setTimeout(() => document.getElementById('adminPasswordInput').focus(), 50);
+            }
+            function closeAdminLogin() {
+                const modal = document.getElementById('adminLoginModal');
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+            function setAdminLoginMessage(message, type) {
+                const el = document.getElementById('adminLoginMessage');
+                el.textContent = message;
+                el.classList.toggle('hidden', !message);
+                el.className = 'text-sm mt-3 ' + (type === 'success' ? 'text-emerald-600' : 'text-rose-600');
+            }
+            function submitAdminLogin(event) {
+                event.preventDefault();
+                if (adminLoginPending) return;
+                const password = document.getElementById('adminPasswordInput').value;
+                if (!password) return;
+                adminLoginPending = true;
+                const button = document.getElementById('adminLoginSubmit');
+                button.disabled = true;
+                button.textContent = 'Menyemak...';
+                setAdminLoginMessage('', '');
+                document.getElementById('hmiAdminPostForm').action = API_URL;
+                document.getElementById('hmiAdminPostPassword').value = password;
+                document.getElementById('hmiAdminPostForm').submit();
+                document.getElementById('adminPasswordInput').value = '';
+            }
+            function logoutAdmin() {
+                sessionStorage.removeItem('hmiAdminToken');
+                document.getElementById('adminLoginForm').classList.remove('hidden');
+                document.getElementById('adminLogoutButton').classList.add('hidden');
+                document.getElementById('adminLoginIcon').className = 'ph ph-user text-xl';
+                setAdminLoginMessage('Anda telah log keluar.', 'success');
+            }
+            window.addEventListener('message', function(event) {
+                if (event.source !== document.getElementById('hmiAdminLoginFrame').contentWindow) return;
+                const data = event.data;
+                if (!data || data.type !== 'HMI_ADMIN_LOGIN' || !data.result) return;
+                adminLoginPending = false;
+                const button = document.getElementById('adminLoginSubmit');
+                button.disabled = false;
+                button.textContent = 'Log Masuk';
+                if (data.result.success && data.result.token) {
+                    sessionStorage.setItem('hmiAdminToken', data.result.token);
+                    document.getElementById('adminLoginForm').classList.add('hidden');
+                    document.getElementById('adminLogoutButton').classList.remove('hidden');
+                    document.getElementById('adminLoginIcon').className = 'ph ph-shield-check text-xl text-emerald-600';
+                    setAdminLoginMessage('Log masuk berjaya. Sesi Admin aktif selama 30 minit.', 'success');
+                } else {
+                    setAdminLoginMessage(data.result.message || 'Log masuk gagal.', 'error');
+                }
+            });
+            document.getElementById('adminLoginModal').addEventListener('click', function(event) {
+                if (event.target === this) closeAdminLogin();
+            });
+
+</script>
 
 <style id="apple-liquid-glass-theme">
 /* Apple-inspired liquid glass: visual layer only; layout and functions unchanged */
@@ -1157,6 +1226,31 @@ nav .rounded-xl, nav .rounded-full {
   nav,.glass-card,.category-nav,.kpi-card,.mini-stat,.modal-card { -webkit-backdrop-filter:none !important; backdrop-filter:none !important; background:#fff !important; }
 }
 </style>
+
+
+    <div id="adminLoginModal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4" role="dialog" aria-modal="true" aria-labelledby="adminLoginTitle">
+        <div class="w-full max-w-sm rounded-3xl bg-white p-6 shadow-2xl border border-teal-100">
+            <div class="flex items-start justify-between gap-3 mb-5">
+                <div class="flex items-center gap-3">
+                    <div class="w-11 h-11 rounded-2xl bg-teal-50 text-teal-700 flex items-center justify-center"><i class="ph ph-shield-check text-2xl"></i></div>
+                    <div><h3 id="adminLoginTitle" class="font-bold text-lg text-slate-900">Admin HMI</h3><p class="text-xs text-slate-500">Log masuk untuk akses pentadbiran</p></div>
+                </div>
+                <button type="button" onclick="closeAdminLogin()" class="w-8 h-8 rounded-full hover:bg-slate-100 text-slate-500" aria-label="Tutup"><i class="ph ph-x text-lg"></i></button>
+            </div>
+            <form id="adminLoginForm" onsubmit="submitAdminLogin(event)">
+                <label for="adminPasswordInput" class="block text-sm font-semibold text-slate-700 mb-2">Password Admin</label>
+                <input id="adminPasswordInput" type="password" autocomplete="current-password" required class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100" placeholder="Masukkan password">
+                <p id="adminLoginMessage" class="hidden text-sm mt-3" role="status"></p>
+                <button id="adminLoginSubmit" type="submit" class="w-full mt-5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 text-sm transition">Log Masuk</button>
+            </form>
+            <button id="adminLogoutButton" type="button" onclick="logoutAdmin()" class="hidden w-full mt-3 rounded-xl border border-slate-200 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50">Log Keluar</button>
+        </div>
+    </div>
+    <iframe name="hmiAdminLoginFrame" id="hmiAdminLoginFrame" title="Pengesahan Admin" class="hidden"></iframe>
+    <form id="hmiAdminPostForm" method="post" target="hmiAdminLoginFrame" class="hidden">
+        <input type="hidden" name="action" value="adminLogin">
+        <input type="hidden" name="password" id="hmiAdminPostPassword">
+    </form>
 
 </body>
 </html>
