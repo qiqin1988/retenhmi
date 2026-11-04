@@ -648,7 +648,7 @@
                     // Sesetengah fail reten bermula dari kolum A, sesetengahnya dari kolum B.
                     let bilIndex=-1;
                     for(let c=0;c<Math.min(r.length-1,3);c++){
-                        if(/^\\d+(?:\\.0)?$/.test(clean(r[c])) && clean(r[c+1])){
+                        if(/^\d+(?:\.0)?$/.test(clean(r[c])) && clean(r[c+1])){
                             bilIndex=c;
                             break;
                         }
