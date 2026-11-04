@@ -479,6 +479,7 @@
                     else if (tab === 'ORIENTASI') model = parseOrientasi(rawRows);
                     else if (tab === 'LATIHAN') model = parseLatihan(rawRows);
                     else if (tab === 'PRIVILEGING') model = parsePrivileging(rawRows);
+                    else if (tab === 'ADVERSE EVENT') model = parseAdverse(rawRows);
                     else model = parseGeneric(rawRows);
 
                     if (!template) template = model;
@@ -486,6 +487,7 @@
                         combinedRows.push({
                             ...record,
                             ward: ward.name,
+                            adverseSummary: model.adverseSummary || null,
                             sub: record.sub || meta.desc
                         });
                     });
@@ -582,13 +584,46 @@
 
             function parseAdverse(rows) {
                 const data=[];
+                const monthPattern=/^(JAN|FEB|MAC|APRIL|MEI|JUN|JULAI|OGOS|SEPT|OKT|NOV|DIS)(?:UARI|RUARI|EMBER)?$/i;
+                const summary={skin:0,fall:0,achievement:0};
+                const readSummaryValue=(row,labelPattern)=>{
+                    const cells=(row||[]).map(v=>String(v??'').trim());
+                    const hit=cells.findIndex(v=>labelPattern.test(v));
+                    if(hit<0)return null;
+                    for(let j=hit+1;j<cells.length;j++){
+                        if(cells[j]!=='' && /^-?\\d+(?:[.,]\\d+)?$/.test(cells[j])) return Number(cells[j].replace(',','.'));
+                    }
+                    for(let j=cells.length-1;j>=0;j--){
+                        if(/^ -?\\d+(?:[.,]\\d+)?$/.test(cells[j])) return Number(cells[j].replace(',','.'));
+                    }
+                    return null;
+                };
                 for(let i=0;i<rows.length;i++){
-                    const r=rows[i]||[], label=String(r[1]||'').trim();
-                    if(/^(JAN|FEB|MAC|APRIL|MEI|JUN|JULAI|OGOS|SEPT|OKT|NOV|DIS)/i.test(label)){
-                        data.push({name:label,sub:'Kejadian adverse event',values:[r[2],r[6],r[10]],raw:r});
+                    const r=rows[i]||[];
+                    const label=String(r[1]??r[0]??'').trim().toUpperCase();
+                    if(monthPattern.test(label)){
+                        data.push({
+                            name:label,sub:'',values:[r[2]??0,r[6]??0,r[10]??0],raw:r
+                        });
+                    }
+                    const joined=r.map(v=>String(v??'')).join(' ').toLowerCase();
+                    if(joined.includes('bilangan pesakit yang mendapat reaksi kulit')) {
+                        const v=readSummaryValue(r,/bilangan pesakit yang mendapat reaksi kulit/i);
+                        if(v!==null)summary.skin=v;
+                    }
+                    if(joined.includes('bilangan pesakit jatuh semasa')) {
+                        const v=readSummaryValue(r,/bilangan pesakit jatuh semasa/i);
+                        if(v!==null)summary.fall=v;
+                    }
+                    if(joined.includes('pencapaian')) {
+                        const v=readSummaryValue(r,/pencapaian/i);
+                        if(v!==null)summary.achievement=v;
                     }
                 }
-                return {kind:'monthlyMetric',headers:['Reaksi kulit tayammum','Pesakit jatuh semasa pengurusan ibadah','Jumlah insiden'],rows:data,title:'Adverse Event'};
+                return {
+                    kind:'adverse',headers:['Bilangan pesakit mendapat reaksi kulit akibat penggunaan debu tayammum','Bilangan pesakit jatuh semasa pelaksanaan pengurusan ibadah pesakit','Jumlah keseluruhan insiden di wad'],
+                    rows:data.slice(0,12),title:'Adverse Event',adverseSummary:summary
+                };
             }
 
             function parseAttendance(rows) {
@@ -629,7 +664,7 @@
 
                     // Kategori berbentuk senarai bulan (Orientasi, Latihan, Privileging):
                     // tapis berdasarkan nama rekod/bulan, bukan indeks lajur.
-                    if(model.kind==='monthlyMetric' && month!=='all') {
+                    if((model.kind==='monthlyMetric' || model.kind==='adverse') && month!=='all') {
                         if(monthIndexFromLabel(item.name)!==Number(month)) return false;
                     }
 
@@ -667,7 +702,23 @@
                 const view = document.getElementById('dataView');
                 let html = '';
 
-                if (model.kind === 'monthly') {
+                if (model.kind === 'adverse') {
+                    const summary = (rows[0] && rows[0].adverseSummary) || model.adverseSummary || {skin:0,fall:0,achievement:0};
+                    const totals = rows.reduce((a,r)=>({skin:a.skin+(Number(r.values[0])||0),fall:a.fall+(Number(r.values[1])||0),incidents:a.incidents+(Number(r.values[2])||0)}),{skin:0,fall:0,incidents:0});
+                    const fmt = v => Number(v||0).toLocaleString('ms-MY');
+                    html = '<div class="p-4 sm:p-6 space-y-5">' +
+                        '<div class="grid grid-cols-1 sm:grid-cols-3 gap-3">' +
+                        '<div class="rounded-2xl border border-rose-100 bg-rose-50/70 p-4"><p class="text-xs font-bold text-rose-700">REAKSI KULIT DEBU TAYAMMUM</p><p class="text-3xl font-bold text-slate-900 mt-2">'+fmt(totals.skin)+'</p><p class="text-xs text-slate-500 mt-1">Jumlah Januari hingga Disember</p></div>' +
+                        '<div class="rounded-2xl border border-amber-100 bg-amber-50/70 p-4"><p class="text-xs font-bold text-amber-700">PESAKIT JATUH</p><p class="text-3xl font-bold text-slate-900 mt-2">'+fmt(totals.fall)+'</p><p class="text-xs text-slate-500 mt-1">Semasa pengurusan ibadah pesakit</p></div>' +
+                        '<div class="rounded-2xl border border-teal-100 bg-teal-50/70 p-4"><p class="text-xs font-bold text-teal-700">JUMLAH KESELURUHAN INSIDEN</p><p class="text-3xl font-bold text-slate-900 mt-2">'+fmt(totals.incidents)+'</p><p class="text-xs text-slate-500 mt-1">Jumlah bulanan</p></div></div>' +
+                        '<div class="flex flex-wrap items-center justify-between gap-2"><div><p class="section-label">REKOD BULANAN</p><h4 class="text-base font-bold text-slate-900 mt-1">Kejadian Adverse Event Mengikut Bulan</h4></div><span class="text-xs text-slate-500">Tahun '+escapeHTML(selectedYear)+'</span></div>' +
+                        '<div class="overflow-x-auto rounded-2xl border border-slate-200"><table class="w-full min-w-[760px] border-collapse"><thead><tr class="bg-slate-100 text-slate-600 text-xs"><th class="p-3 text-left">BULAN</th><th class="p-3 text-center">REAKSI KULIT DEBU TAYAMMUM</th><th class="p-3 text-center">PESAKIT JATUH SEMASA PENGURUSAN IBADAH</th><th class="p-3 text-center bg-orange-100">JUMLAH KESELURUHAN INSIDEN</th></tr></thead><tbody>';
+                    rows.forEach((item,idx)=>{
+                        html+='<tr class="border-t border-slate-100 hover:bg-teal-50/40"><td class="p-3 text-sm font-bold text-slate-700">'+escapeHTML(item.name)+'</td><td class="p-3 text-center text-sm">'+fmt(item.values[0])+'</td><td class="p-3 text-center text-sm">'+fmt(item.values[1])+'</td><td class="p-3 text-center text-sm font-bold bg-orange-50/70">'+fmt(item.values[2])+'</td></tr>';
+                    });
+                    html+='</tbody><tfoot><tr class="border-t-2 border-slate-200 bg-slate-50 font-bold"><td class="p-3 text-sm">JUMLAH</td><td class="p-3 text-center">'+fmt(totals.skin)+'</td><td class="p-3 text-center">'+fmt(totals.fall)+'</td><td class="p-3 text-center bg-orange-100">'+fmt(totals.incidents)+'</td></tr></tfoot></table></div>' +
+                        '<div><p class="section-label">RINGKASAN BORANG</p><div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-2"><div class="rounded-xl bg-slate-50 border border-slate-100 p-3"><p class="text-xs text-slate-500">Reaksi kulit akibat debu tayammum</p><p class="text-xl font-bold text-slate-800 mt-1">'+fmt(summary.skin)+'</p></div><div class="rounded-xl bg-slate-50 border border-slate-100 p-3"><p class="text-xs text-slate-500">Pesakit jatuh semasa pengurusan ibadah</p><p class="text-xl font-bold text-slate-800 mt-1">'+fmt(summary.fall)+'</p></div><div class="rounded-xl bg-slate-50 border border-slate-100 p-3"><p class="text-xs text-slate-500">Pencapaian</p><p class="text-xl font-bold text-slate-800 mt-1">'+fmt(summary.achievement)+'</p></div></div></div></div>';
+                } else if (model.kind === 'monthly') {
                     html = '<table class="hmi-table"><thead><tr><th>Bil</th><th>Nama Wad</th><th style="text-align:left">Item / Perkara</th>';
                     model.headers.forEach(h => html += '<th>' + escapeHTML(h) + '</th>');
                     html += '<th>Pencapaian</th><th>Tindakan</th></tr></thead><tbody>';
@@ -762,6 +813,8 @@
             }
 
             function renderCharts(model) {
+                const chartSection = document.getElementById('allWardsPie')?.closest('section');
+                if (chartSection) chartSection.style.display = model.kind === 'adverse' ? 'none' : '';
                 const category = model.category || selectedTab;
                 const selectedName = document.getElementById('wardFilter').selectedOptions[0]?.textContent || 'Wad dipilih';
                 const selectedScore = scoreForModel(model);
