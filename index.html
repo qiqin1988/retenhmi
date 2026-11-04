@@ -631,12 +631,23 @@
                     }
                     return null;
                 };
+                const toNumber = value => {
+                    if (value === null || value === undefined || String(value).trim() === '') return 0;
+                    const n = Number(String(value).replace(/,/g,'').trim());
+                    return Number.isFinite(n) ? n : null;
+                };
                 for(let i=0;i<rows.length;i++){
                     const r=rows[i]||[];
                     const label=String(r[1]??r[0]??'').trim().toUpperCase();
                     if(monthPattern.test(label)){
+                        const skin = toNumber(r[2]) ?? 0;
+                        const fall = toNumber(r[6]) ?? 0;
+                        // Jika formula jumlah keseluruhan dalam sheet kosong/ralat (NaN),
+                        // kira semula daripada dua jenis insiden yang dipaparkan.
+                        const recordedTotal = toNumber(r[10]);
+                        const incidents = recordedTotal === null ? skin + fall : recordedTotal;
                         data.push({
-                            name:label,sub:'',values:[r[2]??0,r[6]??0,r[10]??0],raw:r
+                            name:label,sub:'',values:[skin,fall,incidents],raw:r
                         });
                     }
                     const joined=r.map(v=>String(v??'')).join(' ').toLowerCase();
