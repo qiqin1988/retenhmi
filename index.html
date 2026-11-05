@@ -1120,7 +1120,8 @@
                 setAdminLoginMessage('Anda telah log keluar.', 'success');
             }
             window.addEventListener('message', function(event) {
-                if (event.source !== document.getElementById('hmiAdminLoginFrame').contentWindow) return;
+                // Apps Script HtmlService mungkin menghantar mesej dari iframe dalaman Google.
+                // Sahkan format mesej, bukan event.source.
                 const data = event.data;
                 if (!data || data.type !== 'HMI_ADMIN_LOGIN' || !data.result) return;
                 adminLoginPending = false;
