@@ -185,22 +185,54 @@
     </main>
 
     <div id="addRecordModal" class="modal-backdrop hidden" onclick="closeAddRecordModal(event)">
-        <div class="modal-card" onclick="event.stopPropagation()">
+        <div class="modal-card" style="max-height:92vh;overflow-y:auto" onclick="event.stopPropagation()">
             <div class="flex items-start justify-between gap-4 pb-4 border-b border-slate-100">
-                <div><p class="section-label">PENGURUSAN DATA</p><h3 class="dashboard-heading text-xl font-bold text-slate-900 mt-1">Tambah Rekod Baharu</h3><p class="text-sm text-slate-500 mt-1">Persediaan kemasukan rekod HMI</p></div>
+                <div><p class="section-label">PENGURUSAN DATA HMI</p><h3 class="dashboard-heading text-xl font-bold text-slate-900 mt-1">Tambah Rekod Kemudahan</h3><p class="text-sm text-slate-500 mt-1">Kemasukan status kemudahan dan peralatan mengikut bulan</p></div>
                 <button type="button" onclick="closeAddRecordModal()" class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600"><i class="ph ph-x"></i></button>
             </div>
-            <div class="py-5">
-                <div class="rounded-2xl border border-violet-100 bg-violet-50/70 p-4">
-                    <div class="flex items-center gap-2 text-violet-800 font-bold"><i class="ph ph-info text-lg"></i> Butang tambah rekod telah diaktifkan</div>
-                    <p class="text-sm text-slate-600 mt-2">Kategori dan wad yang dipilih akan digunakan apabila borang kemasukan rekod disediakan. Buat masa ini, tiada data Google Sheets diubah atau disimpan.</p>
+            <form id="kemudahanEntryForm" class="py-5 space-y-5" onsubmit="event.preventDefault(); previewKemudahanEntry();">
+                <div>
+                    <p class="section-label mb-3">1. MAKLUMAT PELAPORAN</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <label class="text-sm font-semibold text-slate-600">Tahun
+                            <select id="entryYear" class="filter-control w-full mt-1" required><option value="2026">2026</option><option value="2025">2025</option><option value="2024">2024</option><option value="2023">2023</option></select>
+                        </label>
+                        <label class="text-sm font-semibold text-slate-600">Bulan
+                            <select id="entryMonth" class="filter-control w-full mt-1" required>
+                                <option value="">Pilih bulan</option><option>Januari</option><option>Februari</option><option>Mac</option><option>April</option><option>Mei</option><option>Jun</option><option>Julai</option><option>Ogos</option><option>September</option><option>Oktober</option><option>November</option><option>Disember</option>
+                            </select>
+                        </label>
+                        <label class="text-sm font-semibold text-slate-600 sm:col-span-2">Wad
+                            <select id="entryWard" class="filter-control w-full mt-1" required><option value="">Pilih wad</option></select>
+                        </label>
+                        <label class="text-sm font-semibold text-slate-600 sm:col-span-2">Pegawai bertanggungjawab
+                            <input id="entryOfficer" type="text" class="filter-control w-full mt-1" placeholder="Nama pegawai" required>
+                        </label>
+                    </div>
                 </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
-                    <div class="rounded-xl bg-slate-50 p-3"><p class="section-label">KATEGORI DIPILIH</p><p id="addRecordCategoryLabel" class="font-semibold text-slate-800 mt-1">—</p></div>
-                    <div class="rounded-xl bg-slate-50 p-3"><p class="section-label">WAD DIPILIH</p><p id="addRecordWardLabel" class="font-semibold text-slate-800 mt-1">—</p></div>
+                <div>
+                    <div class="flex items-center justify-between gap-2 mb-3"><p class="section-label">2. STATUS KEMUDAHAN & PERALATAN</p><span class="text-xs text-slate-400">Pilih Ada atau Tiada</span></div>
+                    <div id="kemudahanStatusList" class="space-y-2"></div>
+                    <div class="rounded-xl bg-slate-50 border border-slate-100 p-3 mt-3 flex items-center justify-between gap-3">
+                        <div><p class="text-xs text-slate-500">Jumlah kemudahan tersedia</p><p class="text-xs text-slate-400">Daripada 10 item</p></div>
+                        <strong id="kemudahanCountPreview" class="text-xl text-slate-800">0 / 10</strong>
+                    </div>
                 </div>
-            </div>
-            <div class="flex justify-end"><button type="button" onclick="closeAddRecordModal()" class="rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-bold text-white hover:bg-slate-700">Tutup</button></div>
+                <div>
+                    <p class="section-label mb-3">3. PENGESAHAN</p>
+                    <label class="text-sm font-semibold text-slate-600">Disediakan oleh
+                        <input id="entryPreparedBy" type="text" class="filter-control w-full mt-1" placeholder="Nama penyedia">
+                    </label>
+                </div>
+                <div class="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+                    Borang kemasukan sedang disediakan. Butang simpan ke Google Sheets akan diaktifkan selepas sambungan dan pengesahan struktur sel dibuat. Tiada data akan diubah pada peringkat ini.
+                </div>
+                <div class="flex flex-col sm:flex-row justify-end gap-2">
+                    <button type="button" onclick="closeAddRecordModal()" class="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-bold text-slate-600">Tutup</button>
+                    <button type="submit" class="rounded-xl px-5 py-2.5 text-sm font-bold text-white" style="background:#76539b">Semak Ringkasan</button>
+                </div>
+                <p id="kemudahanEntryPreview" class="hidden text-sm font-semibold text-violet-700" aria-live="polite"></p>
+            </form>
         </div>
     </div>
     <div id="detailModal" class="modal-backdrop hidden" onclick="closeDetail(event)">
@@ -1098,13 +1130,38 @@
             
             // ADMIN LOGIN: pengesahan dibuat di Apps Script, bukan di browser.
 
+            const KEMUDAHAN_ITEMS = ['Ruang solat','Tempat wuduk','Penanda arah kiblat','Buku/Pamflet panduan ibadah','Sejadah/telekung/kain pelikat','Kit solat','Botol spray/debu tayammum','Pamflet/flyers/buku ibadah','Alquran/Yaasin','Takwim solat'];
+            function buildKemudahanEntryItems() {
+                const host = document.getElementById('kemudahanStatusList');
+                if (!host || host.dataset.ready === '1') return;
+                host.innerHTML = KEMUDAHAN_ITEMS.map((item, i) => '<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-xl border border-slate-100 p-3"><span class="text-sm font-medium text-slate-700">'+(i+1)+'. '+item+'</span><div class="flex gap-2"><label class="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700"><input type="radio" name="kemudahan_'+i+'" value="/" onchange="updateKemudahanPreview()"> Ada (/)</label><label class="inline-flex items-center gap-1.5 rounded-lg bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700"><input type="radio" name="kemudahan_'+i+'" value="X" onchange="updateKemudahanPreview()"> Tiada (X)</label></div></div>').join('');
+                host.dataset.ready = '1';
+            }
+            function updateKemudahanPreview() {
+                const count = KEMUDAHAN_ITEMS.filter((_,i) => { const el=document.querySelector('input[name="kemudahan_'+i+'"]:checked'); return el && el.value === '/'; }).length;
+                document.getElementById('kemudahanCountPreview').textContent = count+' / 10';
+            }
+            function previewKemudahanEntry() {
+                const missing = KEMUDAHAN_ITEMS.filter((_,i) => !document.querySelector('input[name="kemudahan_'+i+'"]:checked')).length;
+                const msg = document.getElementById('kemudahanEntryPreview');
+                msg.textContent = missing ? 'Sila lengkapkan status bagi '+missing+' item lagi.' : 'Semakan lengkap: '+document.getElementById('kemudahanCountPreview').textContent+' kemudahan tersedia. Fungsi simpan akan disambungkan selepas struktur sel disahkan.';
+                msg.classList.remove('hidden');
+            }
+            window.updateKemudahanPreview = updateKemudahanPreview;
             function openAddRecordModal() {
                 if (!sessionStorage.getItem('hmiAdminToken')) { alert('Sila log masuk sebagai Admin terlebih dahulu.'); return; }
-                const category = (document.querySelector('.category-btn.active span') || {}).textContent || 'Belum dipilih';
+                const activeCategory = (document.querySelector('.category-btn.active span') || {}).textContent || 'Kemudahan';
+                if (!/kemudahan/i.test(activeCategory)) { alert('Borang tambah rekod ini buat masa ini disediakan untuk kategori Kemudahan sahaja.'); return; }
+                buildKemudahanEntryItems();
+                const year = document.getElementById('yearFilter').value || '2026';
+                document.getElementById('entryYear').value = year;
                 const wardSelect = document.getElementById('wardFilter');
-                const ward = wardSelect && wardSelect.value ? wardSelect.options[wardSelect.selectedIndex].text : 'Belum dipilih';
-                document.getElementById('addRecordCategoryLabel').textContent = category;
-                document.getElementById('addRecordWardLabel').textContent = ward;
+                const entryWard = document.getElementById('entryWard');
+                entryWard.innerHTML = wardSelect ? wardSelect.innerHTML : '<option value="">Pilih wad</option>';
+                entryWard.value = wardSelect ? wardSelect.value : '';
+                const monthFilter = document.getElementById('monthFilter').value;
+                if (monthFilter !== 'all') document.getElementById('entryMonth').selectedIndex = Number(monthFilter) + 1;
+                updateKemudahanPreview();
                 const modal = document.getElementById('addRecordModal');
                 modal.classList.remove('hidden'); modal.classList.add('flex');
             }
