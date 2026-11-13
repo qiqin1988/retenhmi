@@ -99,8 +99,11 @@
             <div class="kpi-card kpi-live"><div class="kpi-icon live"><i class="ph ph-cloud-check"></i></div><p>Sambungan Data</p><strong>LIVE</strong><span><i class="ph-fill ph-check-circle"></i> Google Sheets</span></div>
         </section>
 
-        <section class="mb-6">
-            <div class="category-nav" id="categoryNav"></div>
+        <section class="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="category-nav flex-1" id="categoryNav"></div>
+            <button type="button" id="addRecordButton" onclick="openAddRecordModal()" class="hidden shrink-0 inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-bold text-white shadow-lg transition hover:-translate-y-0.5" style="background:linear-gradient(135deg,#76539b,#9a78b8);box-shadow:0 7px 18px rgba(118,83,155,.22)">
+                <i class="ph ph-plus-circle text-lg"></i> Tambah Rekod Baharu
+            </button>
         </section>
 
         <section class="glass-card rounded-3xl overflow-hidden mb-6">
@@ -181,6 +184,25 @@
         </footer>
     </main>
 
+    <div id="addRecordModal" class="modal-backdrop hidden" onclick="closeAddRecordModal(event)">
+        <div class="modal-card" onclick="event.stopPropagation()">
+            <div class="flex items-start justify-between gap-4 pb-4 border-b border-slate-100">
+                <div><p class="section-label">PENGURUSAN DATA</p><h3 class="dashboard-heading text-xl font-bold text-slate-900 mt-1">Tambah Rekod Baharu</h3><p class="text-sm text-slate-500 mt-1">Persediaan kemasukan rekod HMI</p></div>
+                <button type="button" onclick="closeAddRecordModal()" class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600"><i class="ph ph-x"></i></button>
+            </div>
+            <div class="py-5">
+                <div class="rounded-2xl border border-violet-100 bg-violet-50/70 p-4">
+                    <div class="flex items-center gap-2 text-violet-800 font-bold"><i class="ph ph-info text-lg"></i> Butang tambah rekod telah diaktifkan</div>
+                    <p class="text-sm text-slate-600 mt-2">Kategori dan wad yang dipilih akan digunakan apabila borang kemasukan rekod disediakan. Buat masa ini, tiada data Google Sheets diubah atau disimpan.</p>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+                    <div class="rounded-xl bg-slate-50 p-3"><p class="section-label">KATEGORI DIPILIH</p><p id="addRecordCategoryLabel" class="font-semibold text-slate-800 mt-1">—</p></div>
+                    <div class="rounded-xl bg-slate-50 p-3"><p class="section-label">WAD DIPILIH</p><p id="addRecordWardLabel" class="font-semibold text-slate-800 mt-1">—</p></div>
+                </div>
+            </div>
+            <div class="flex justify-end"><button type="button" onclick="closeAddRecordModal()" class="rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-bold text-white hover:bg-slate-700">Tutup</button></div>
+        </div>
+    </div>
     <div id="detailModal" class="modal-backdrop hidden" onclick="closeDetail(event)">
         <div class="modal-card" onclick="event.stopPropagation()">
             <div class="flex items-start justify-between gap-4 pb-4 border-b border-slate-100">
@@ -1075,6 +1097,24 @@
     
             
             // ADMIN LOGIN: pengesahan dibuat di Apps Script, bukan di browser.
+
+            function openAddRecordModal() {
+                if (!sessionStorage.getItem('hmiAdminToken')) { alert('Sila log masuk sebagai Admin terlebih dahulu.'); return; }
+                const category = (document.querySelector('.category-btn.active span') || {}).textContent || 'Belum dipilih';
+                const wardSelect = document.getElementById('wardFilter');
+                const ward = wardSelect && wardSelect.value ? wardSelect.options[wardSelect.selectedIndex].text : 'Belum dipilih';
+                document.getElementById('addRecordCategoryLabel').textContent = category;
+                document.getElementById('addRecordWardLabel').textContent = ward;
+                const modal = document.getElementById('addRecordModal');
+                modal.classList.remove('hidden'); modal.classList.add('flex');
+            }
+            function closeAddRecordModal(event) {
+                if (event && event.target !== document.getElementById('addRecordModal')) return;
+                const modal = document.getElementById('addRecordModal');
+                modal.classList.add('hidden'); modal.classList.remove('flex');
+            }
+            window.openAddRecordModal = openAddRecordModal;
+            window.closeAddRecordModal = closeAddRecordModal;
             let adminLoginPending = false;
             function openAdminLogin() {
                 const modal = document.getElementById('adminLoginModal');
@@ -1117,6 +1157,7 @@
                 document.getElementById('adminLoginForm').classList.remove('hidden');
                 document.getElementById('adminLogoutButton').classList.add('hidden');
                 document.getElementById('adminLoginIcon').className = 'ph ph-user text-xl';
+                document.getElementById('addRecordButton').classList.add('hidden');
                 setAdminLoginMessage('Anda telah log keluar.', 'success');
             }
             window.addEventListener('message', function(event) {
@@ -1133,6 +1174,7 @@
                     document.getElementById('adminLoginForm').classList.add('hidden');
                     document.getElementById('adminLogoutButton').classList.remove('hidden');
                     document.getElementById('adminLoginIcon').className = 'ph ph-shield-check text-xl text-emerald-600';
+                    document.getElementById('addRecordButton').classList.remove('hidden');
                     setAdminLoginMessage('Log masuk berjaya. Sesi Admin aktif selama 30 minit.', 'success');
                 } else {
                     setAdminLoginMessage(data.result.message || 'Log masuk gagal.', 'error');
