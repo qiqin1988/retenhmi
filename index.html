@@ -190,7 +190,7 @@
                 <div><p class="section-label">PENGURUSAN DATA HMI</p><h3 class="dashboard-heading text-xl font-bold text-slate-900 mt-1">Tambah Rekod Kemudahan</h3><p class="text-sm text-slate-500 mt-1">Kemasukan status kemudahan dan peralatan mengikut bulan</p></div>
                 <button type="button" onclick="closeAddRecordModal()" class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600"><i class="ph ph-x"></i></button>
             </div>
-            <form id="kemudahanEntryForm" class="py-5 space-y-5" onsubmit="event.preventDefault(); previewKemudahanEntry();">
+            <form id="kemudahanEntryForm" class="py-5 space-y-5" onsubmit="submitKemudahanEntry(event);">
                 <div>
                     <p class="section-label mb-3">1. MAKLUMAT PELAPORAN</p>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -224,12 +224,12 @@
                         <input id="entryPreparedBy" type="text" class="filter-control w-full mt-1" placeholder="Nama penyedia">
                     </label>
                 </div>
-                <div class="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
-                    Borang kemasukan sedang disediakan. Butang simpan ke Google Sheets akan diaktifkan selepas sambungan dan pengesahan struktur sel dibuat. Tiada data akan diubah pada peringkat ini.
+                <div class="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">
+                    Rekod Tahun 2027 akan disimpan terus ke tab KEMUDAHAN 2027 bagi wad dan bulan yang dipilih. Jika bulan sama disimpan semula, status bulan tersebut akan dikemas kini.
                 </div>
                 <div class="flex flex-col sm:flex-row justify-end gap-2">
                     <button type="button" onclick="closeAddRecordModal()" class="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-bold text-slate-600">Tutup</button>
-                    <button type="submit" class="rounded-xl px-5 py-2.5 text-sm font-bold text-white" style="background:#76539b">Semak Ringkasan</button>
+                    <button id="saveKemudahanButton" type="submit" class="rounded-xl px-5 py-2.5 text-sm font-bold text-white" style="background:#76539b">Simpan ke Sheet 2027</button>
                 </div>
                 <p id="kemudahanEntryPreview" class="hidden text-sm font-semibold text-violet-700" aria-live="polite"></p>
             </form>
@@ -1147,6 +1147,60 @@
                 msg.textContent = missing ? 'Sila lengkapkan status bagi '+missing+' item lagi.' : 'Semakan lengkap: '+document.getElementById('kemudahanCountPreview').textContent+' kemudahan tersedia. Fungsi simpan akan disambungkan selepas struktur sel disahkan.';
                 msg.classList.remove('hidden');
             }
+
+            function submitKemudahanEntry(event) {
+                event.preventDefault();
+                const msg = document.getElementById('kemudahanEntryPreview');
+                const button = document.getElementById('saveKemudahanButton');
+                const year = document.getElementById('entryYear').value;
+                const monthSelect = document.getElementById('entryMonth');
+                const wardId = document.getElementById('entryWard').value;
+                const token = sessionStorage.getItem('hmiAdminToken');
+                const statuses = KEMUDAHAN_ITEMS.map((_,i) => {
+                    const selected = document.querySelector('input[name="kemudahan_'+i+'"]:checked');
+                    return selected ? selected.value : '';
+                });
+
+                if (year !== '2027') {
+                    msg.textContent = 'Simpanan terus buat masa ini hanya diaktifkan untuk Tahun 2027.';
+                    msg.classList.remove('hidden');
+                    return;
+                }
+                if (!token) {
+                    msg.textContent = 'Sesi Admin tiada atau tamat. Sila log masuk semula.';
+                    msg.classList.remove('hidden');
+                    return;
+                }
+                if (!wardId) {
+                    msg.textContent = 'Sila pilih wad.';
+                    msg.classList.remove('hidden');
+                    return;
+                }
+                if (monthSelect.selectedIndex < 1) {
+                    msg.textContent = 'Sila pilih bulan.';
+                    msg.classList.remove('hidden');
+                    return;
+                }
+                if (statuses.some(value => value !== '/' && value !== 'X')) {
+                    msg.textContent = 'Sila lengkapkan status bagi kesemua 10 item.';
+                    msg.classList.remove('hidden');
+                    return;
+                }
+
+                document.getElementById('hmiSavePostForm').action = window.HMI_API_URL;
+                document.getElementById('hmiSaveToken').value = token;
+                document.getElementById('hmiSaveWardId').value = wardId;
+                document.getElementById('hmiSaveMonthIndex').value = String(monthSelect.selectedIndex - 1);
+                document.getElementById('hmiSaveStatuses').value = JSON.stringify(statuses);
+                document.getElementById('hmiSaveOfficer').value = document.getElementById('entryOfficer').value.trim();
+                document.getElementById('hmiSavePreparedBy').value = document.getElementById('entryPreparedBy').value.trim();
+
+                button.disabled = true;
+                button.textContent = 'Menyimpan...';
+                msg.textContent = 'Sedang menyimpan rekod ke Google Sheets...';
+                msg.classList.remove('hidden');
+                document.getElementById('hmiSavePostForm').submit();
+            }
             window.updateKemudahanPreview = updateKemudahanPreview;
             function openAddRecordModal() {
                 if (!sessionStorage.getItem('hmiAdminToken')) { alert('Sila log masuk sebagai Admin terlebih dahulu.'); return; }
@@ -1221,7 +1275,24 @@
                 // Apps Script HtmlService mungkin menghantar mesej dari iframe dalaman Google.
                 // Sahkan format mesej, bukan event.source.
                 const data = event.data;
-                if (!data || data.type !== 'HMI_ADMIN_LOGIN' || !data.result) return;
+                if (!data || !data.result) return;
+                if (data.type === 'HMI_SAVE_KEMUDAHAN') {
+                    const saveButton = document.getElementById('saveKemudahanButton');
+                    saveButton.disabled = false;
+                    saveButton.textContent = 'Simpan ke Sheet 2027';
+                    const saveMessage = document.getElementById('kemudahanEntryPreview');
+                    saveMessage.textContent = data.result.message || (data.result.success ? 'Rekod berjaya disimpan.' : 'Rekod gagal disimpan.');
+                    saveMessage.classList.remove('hidden');
+                    if (data.result.success) {
+                        const cacheKey = document.getElementById('entryWard').value + '::KEMUDAHAN';
+                        delete wardCategoryCache[cacheKey];
+                        if (selectedYear === '2027' && selectedWardId === document.getElementById('entryWard').value) {
+                            loadSelectedData();
+                        }
+                    }
+                    return;
+                }
+                if (data.type !== 'HMI_ADMIN_LOGIN') return;
                 adminLoginPending = false;
                 const button = document.getElementById('adminLoginSubmit');
                 button.disabled = false;
@@ -1348,6 +1419,16 @@ nav .rounded-xl, nav .rounded-full {
         </div>
     </div>
     <iframe name="hmiAdminLoginFrame" id="hmiAdminLoginFrame" title="Pengesahan Admin" class="hidden"></iframe>
+    <iframe name="hmiSaveFrame" id="hmiSaveFrame" title="Simpan Rekod HMI" class="hidden"></iframe>
+    <form id="hmiSavePostForm" method="post" target="hmiSaveFrame" class="hidden">
+        <input type="hidden" name="action" value="saveKemudahan2027">
+        <input type="hidden" name="token" id="hmiSaveToken">
+        <input type="hidden" name="id" id="hmiSaveWardId">
+        <input type="hidden" name="monthIndex" id="hmiSaveMonthIndex">
+        <input type="hidden" name="statuses" id="hmiSaveStatuses">
+        <input type="hidden" name="officer" id="hmiSaveOfficer">
+        <input type="hidden" name="preparedBy" id="hmiSavePreparedBy">
+    </form>
     <form id="hmiAdminPostForm" method="post" target="hmiAdminLoginFrame" class="hidden">
         <input type="hidden" name="action" value="adminLogin">
         <input type="hidden" name="password" id="hmiAdminPostPassword">
