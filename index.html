@@ -1263,12 +1263,27 @@
                 document.getElementById('hmiAdminPostForm').submit();
                 document.getElementById('adminPasswordInput').value = '';
             }
+            // Paparan butang Tambah Rekod sentiasa mengikut status sesi Admin.
+            // Menutup modal atau memuat semula paparan tidak akan menyembunyikan butang
+            // selagi token Admin masih wujud dalam sessionStorage.
+            function syncAdminUI() {
+                const loggedIn = !!sessionStorage.getItem('hmiAdminToken');
+                const addButton = document.getElementById('addRecordButton');
+                const loginForm = document.getElementById('adminLoginForm');
+                const logoutButton = document.getElementById('adminLogoutButton');
+                const loginIcon = document.getElementById('adminLoginIcon');
+
+                if (addButton) addButton.classList.toggle('hidden', !loggedIn);
+                if (loginForm) loginForm.classList.toggle('hidden', loggedIn);
+                if (logoutButton) logoutButton.classList.toggle('hidden', !loggedIn);
+                if (loginIcon) loginIcon.className = loggedIn
+                    ? 'ph ph-shield-check text-xl text-emerald-600'
+                    : 'ph ph-user text-xl';
+            }
+
             function logoutAdmin() {
                 sessionStorage.removeItem('hmiAdminToken');
-                document.getElementById('adminLoginForm').classList.remove('hidden');
-                document.getElementById('adminLogoutButton').classList.add('hidden');
-                document.getElementById('adminLoginIcon').className = 'ph ph-user text-xl';
-                document.getElementById('addRecordButton').classList.add('hidden');
+                syncAdminUI();
                 setAdminLoginMessage('Anda telah log keluar.', 'success');
             }
             window.addEventListener('message', function(event) {
@@ -1299,15 +1314,17 @@
                 button.textContent = 'Log Masuk';
                 if (data.result.success && data.result.token) {
                     sessionStorage.setItem('hmiAdminToken', data.result.token);
-                    document.getElementById('adminLoginForm').classList.add('hidden');
-                    document.getElementById('adminLogoutButton').classList.remove('hidden');
-                    document.getElementById('adminLoginIcon').className = 'ph ph-shield-check text-xl text-emerald-600';
-                    document.getElementById('addRecordButton').classList.remove('hidden');
+                    syncAdminUI();
                     setAdminLoginMessage('Log masuk berjaya. Sesi Admin aktif selama 30 minit.', 'success');
                 } else {
                     setAdminLoginMessage(data.result.message || 'Log masuk gagal.', 'error');
                 }
             });
+            // Pulihkan keadaan butang apabila halaman dibuka semula atau kembali fokus.
+            document.addEventListener('DOMContentLoaded', syncAdminUI);
+            window.addEventListener('focus', syncAdminUI);
+            syncAdminUI();
+
             document.getElementById('adminLoginModal').addEventListener('click', function(event) {
                 if (event.target === this) closeAdminLogin();
             });
