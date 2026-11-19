@@ -1217,7 +1217,14 @@
                 document.getElementById('entryYear').value = year;
                 const wardSelect = document.getElementById('wardFilter');
                 const entryWard = document.getElementById('entryWard');
-                entryWard.innerHTML = wardSelect ? wardSelect.innerHTML : '<option value="">Pilih wad</option>';
+
+                // Tahun 2027 buat masa ini hanya membenarkan WAD REHAB.
+                // Jangan salin ID daripada senarai wad dashboard tahun 2026.
+                if (year === '2027') {
+                    entryWard.innerHTML = '<option value="">Pilih wad</option><option value="WAD REHAB">WAD REHAB</option>';
+                } else {
+                    entryWard.innerHTML = wardSelect ? wardSelect.innerHTML : '<option value="">Pilih wad</option>';
+                }
                 entryWard.value = '';
 
                 document.getElementById('entryMonth').selectedIndex = 0;
