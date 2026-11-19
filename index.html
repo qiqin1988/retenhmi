@@ -1154,7 +1154,9 @@
                 const button = document.getElementById('saveKemudahanButton');
                 const year = document.getElementById('entryYear').value;
                 const monthSelect = document.getElementById('entryMonth');
-                const wardId = document.getElementById('entryWard').value;
+                // Tahun 2027 hanya menggunakan satu wad. Jangan hantar ID spreadsheet
+                // atau ID wad daripada senarai dashboard sebagai nilai wad.
+                const wardId = year === '2027' ? 'WAD REHAB' : document.getElementById('entryWard').value;
                 const token = sessionStorage.getItem('hmiAdminToken');
                 const statuses = KEMUDAHAN_ITEMS.map((_,i) => {
                     const selected = document.querySelector('input[name="kemudahan_'+i+'"]:checked');
@@ -1221,11 +1223,12 @@
                 // Tahun 2027 buat masa ini hanya membenarkan WAD REHAB.
                 // Jangan salin ID daripada senarai wad dashboard tahun 2026.
                 if (year === '2027') {
-                    entryWard.innerHTML = '<option value="">Pilih wad</option><option value="WAD REHAB">WAD REHAB</option>';
+                    entryWard.innerHTML = '<option value="WAD REHAB">WAD REHAB</option>';
+                    entryWard.value = 'WAD REHAB';
                 } else {
                     entryWard.innerHTML = wardSelect ? wardSelect.innerHTML : '<option value="">Pilih wad</option>';
+                    entryWard.value = '';
                 }
-                entryWard.value = '';
 
                 document.getElementById('entryMonth').selectedIndex = 0;
                 document.getElementById('entryOfficer').value = '';
