@@ -1207,15 +1207,31 @@
                 const activeCategory = (document.querySelector('.category-btn.active span') || {}).textContent || 'Kemudahan';
                 if (!/kemudahan/i.test(activeCategory)) { alert('Borang tambah rekod ini buat masa ini disediakan untuk kategori Kemudahan sahaja.'); return; }
                 buildKemudahanEntryItems();
+
+                // Setiap kali borang dibuka, mulakan rekod baharu dengan medan kosong.
+                const form = document.getElementById('kemudahanEntryForm');
+                form.reset();
+                document.querySelectorAll('#kemudahanStatusList input[type="radio"]').forEach(input => { input.checked = false; });
+
                 const year = document.getElementById('yearFilter').value || '2026';
                 document.getElementById('entryYear').value = year;
                 const wardSelect = document.getElementById('wardFilter');
                 const entryWard = document.getElementById('entryWard');
                 entryWard.innerHTML = wardSelect ? wardSelect.innerHTML : '<option value="">Pilih wad</option>';
-                entryWard.value = wardSelect ? wardSelect.value : '';
-                const monthFilter = document.getElementById('monthFilter').value;
-                if (monthFilter !== 'all') document.getElementById('entryMonth').selectedIndex = Number(monthFilter) + 1;
-                updateKemudahanPreview();
+                entryWard.value = '';
+
+                document.getElementById('entryMonth').selectedIndex = 0;
+                document.getElementById('entryOfficer').value = '';
+                document.getElementById('entryPreparedBy').value = '';
+                document.getElementById('kemudahanCountPreview').textContent = '0 / 10';
+
+                const msg = document.getElementById('kemudahanEntryPreview');
+                msg.textContent = '';
+                msg.classList.add('hidden');
+                const saveButton = document.getElementById('saveKemudahanButton');
+                saveButton.disabled = false;
+                saveButton.textContent = 'Simpan ke Sheet 2027';
+
                 const modal = document.getElementById('addRecordModal');
                 modal.classList.remove('hidden'); modal.classList.add('flex');
             }
