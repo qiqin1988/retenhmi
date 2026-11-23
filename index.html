@@ -373,12 +373,36 @@
             }
             window.changeYear = changeYear;
 
-            function selectTab(name) {
+            async function selectTab(name) {
                 selectedTab = name;
+                selectedWardId = '';
                 document.getElementById('searchInput').value = '';
                 document.getElementById('statusFilter').value = 'all';
                 document.getElementById('monthFilter').value = 'all';
                 buildCategoryNav();
+                if (selectedYear === '2027') {
+                    const view = document.getElementById('dataView');
+                    view.innerHTML = '<div class="min-h-[300px] flex items-center justify-center text-slate-400"><div class="text-center"><i class="ph ph-spinner-gap animate-spin text-4xl text-blue-500"></i><p class="mt-3 font-medium">Memuatkan senarai wad ' + escapeHTML(getMeta(name).label) + ' 2027...</p></div></div>';
+                    try {
+                        const result = await callAPI({action:'list2027', category:name});
+                        if (!result || !result.success || !Array.isArray(result.wards)) throw new Error((result && result.message) || 'Senarai wad kategori ' + name + ' tidak dapat dibaca.');
+                        const wards = result.wards.map(w => ({id:w.id || w.name,name:w.name}));
+                        totalWards = wards.length;
+                        const wardFilter = document.getElementById('wardFilter');
+                        wardFilter.innerHTML = '<option value="">Pilih Wad (' + totalWards + ' tersedia)</option>' +
+                            wards.map(w => '<option value="' + escapeHTML(w.id) + '">' + escapeHTML(w.name) + '</option>').join('');
+                        document.getElementById('kpiRows').textContent = totalWards;
+                        document.getElementById('dataSubtitle').textContent = totalWards + ' wad tersedia • ' + getMeta(name).label + ' 2027';
+                        document.getElementById('tableSummary').textContent = totalWards + ' wad tersedia • Tahun 2027';
+                        delete allWardChartCache[name];
+                        delete wardCategoryCache[name];
+                        view.innerHTML = '<div class="min-h-[300px] flex items-center justify-center text-center text-slate-400"><div><i class="ph ph-hand-point-up text-4xl"></i><p class="mt-2 font-semibold">Pilih wad untuk bermula</p><p class="text-xs mt-1">Senarai ' + escapeHTML(getMeta(name).label) + ' 2027 telah dimuatkan.</p></div></div>';
+                        window.currentModel = null;
+                    } catch (error) {
+                        view.innerHTML = '<div class="p-6 text-center text-rose-600">' + escapeHTML(error.message) + '</div>';
+                    }
+                    return;
+                }
                 loadSelectedData();
             }
 
@@ -1053,7 +1077,7 @@
 
                 if (!allWardChartCache[category] && !window.loadingAllWardCharts) {
                     window.loadingAllWardCharts = category;
-                    callAPI({action:'getCategoryAll',category:category}).then(result => {
+                    callAPI({action:selectedYear === '2027' ? 'getCategoryAll2027' : 'getCategoryAll',category:category}).then(result => {
                         if (result && result.success && Array.isArray(result.wards)) {
                             allWardChartCache[category] = result.wards;
                             if (window.currentModel && window.currentModel.category === category) renderCharts(window.currentModel);
@@ -1089,9 +1113,16 @@
                     view.innerHTML = '<div class="min-h-[300px] flex items-center justify-center text-slate-400"><div class="text-center"><i class="ph ph-spinner-gap animate-spin text-4xl text-blue-500"></i><p class="mt-3 font-medium">Memuatkan senarai wad tahun ' + selectedYear + '...</p></div></div>';
                     let result, wards;
                     if (selectedYear !== '2026') {
-                        allCategories = selectedYear === '2027' ? ['KEMUDAHAN'] : ['KEMUDAHAN','ORIENTASI','LATIHAN','PRIVILEGING','ADVERSE EVENT','DATA KEHADIRAN KURSUS'];
-                        result = await callAPI({action:'list' + selectedYear});
-                        if (!result || !result.success || !Array.isArray(result.wards)) throw new Error((result && result.message) || 'Senarai wad tahun ' + selectedYear + ' tidak dapat dibaca.');
+                        if (selectedYear === '2027') {
+                            const requestedCategory = selectedTab || 'KEMUDAHAN';
+                            result = await callAPI({action:'list2027', category:requestedCategory});
+                            if (!result || !result.success || !Array.isArray(result.wards)) throw new Error((result && result.message) || 'Senarai wad 2027 tidak dapat dibaca.');
+                            allCategories = Array.isArray(result.categories) ? result.categories : ['KEMUDAHAN','ORIENTASI'];
+                        } else {
+                            allCategories = ['KEMUDAHAN','ORIENTASI','LATIHAN','PRIVILEGING','ADVERSE EVENT','DATA KEHADIRAN KURSUS'];
+                            result = await callAPI({action:'list' + selectedYear});
+                            if (!result || !result.success || !Array.isArray(result.wards)) throw new Error((result && result.message) || 'Senarai wad tahun ' + selectedYear + ' tidak dapat dibaca.');
+                        }
                         wards = result.wards.map(w => ({id:w.id || w.name,name:w.name}));
                     } else {
                         result = await callAPI({action:'list'});
@@ -1138,7 +1169,7 @@
                 "WAD C16", "WAD C17 Medikal", "WAD C17 (Eye)", "WAD C18 ENT",
                 "WAD C19", "WAD C20 (ID)", "WAD CCU", "WAD CRW", "WAD GICU",
                 "WAD Neuro-ICU", "WAD OBS ACC", "WAD OBS Blok D", "WAD Paliatif",
-                "WAD REHAB", "WAD CICU", "WAD RADIOIDIN"
+                "WAD REHAB", "WAD CICU", "WAD RADIOIDIN", "WAD C11 HDA"
             ];
 
             const KEMUDAHAN_ITEMS = ['Ruang solat','Tempat wuduk','Penanda arah kiblat','Buku/Pamflet panduan ibadah','Sejadah/telekung/kain pelikat','Kit solat','Botol spray/debu tayammum','Pamflet/flyers/buku ibadah','Alquran/Yaasin','Takwim solat'];
