@@ -1130,6 +1130,18 @@
             
             // ADMIN LOGIN: pengesahan dibuat di Apps Script, bukan di browser.
 
+            // Senarai wad rasmi untuk borang dan dashboard RETEN HMI 2027.
+            const HMI_2027_WARDS = [
+                "BURN UNIT", "WAD A1", "WAD A2(H)", "WAD A2(HDA)", "WAD A2(N)",
+                "WAD A3rd", "WAD A3rd Plastik", "WAD A3rd (BMT)", "WAD A4th",
+                "WAD C5", "WAD C6", "WAD C7", "WAD C8", "WAD C9", "WAD C10",
+                "WAD C11", "WAD C12", "WAD C13 (Gynae)", "WAD C14", "WAD C15",
+                "WAD C16", "WAD C17 Medikal", "WAD C17 (Eye)", "WAD C18 ENT",
+                "WAD C19", "WAD C20 (ID)", "WAD CCU", "WAD CRW", "WAD GICU",
+                "WAD Neuro-ICU", "WAD OBS ACC", "WAD OBS Blok D", "WAD Paliatif",
+                "WAD REHAB"
+            ];
+
             const KEMUDAHAN_ITEMS = ['Ruang solat','Tempat wuduk','Penanda arah kiblat','Buku/Pamflet panduan ibadah','Sejadah/telekung/kain pelikat','Kit solat','Botol spray/debu tayammum','Pamflet/flyers/buku ibadah','Alquran/Yaasin','Takwim solat'];
             function buildKemudahanEntryItems() {
                 const host = document.getElementById('kemudahanStatusList');
@@ -1154,9 +1166,8 @@
                 const button = document.getElementById('saveKemudahanButton');
                 const year = document.getElementById('entryYear').value;
                 const monthSelect = document.getElementById('entryMonth');
-                // Tahun 2027 hanya menggunakan satu wad. Jangan hantar ID spreadsheet
-                // atau ID wad daripada senarai dashboard sebagai nilai wad.
-                const wardId = year === '2027' ? 'WAD REHAB' : document.getElementById('entryWard').value;
+                // Gunakan wad yang dipilih dalam borang untuk semua rekod Tahun 2027.
+                const wardId = document.getElementById('entryWard').value;
                 const token = sessionStorage.getItem('hmiAdminToken');
                 const statuses = KEMUDAHAN_ITEMS.map((_,i) => {
                     const selected = document.querySelector('input[name="kemudahan_'+i+'"]:checked');
@@ -1220,11 +1231,11 @@
                 const wardSelect = document.getElementById('wardFilter');
                 const entryWard = document.getElementById('entryWard');
 
-                // Tahun 2027 buat masa ini hanya membenarkan WAD REHAB.
-                // Jangan salin ID daripada senarai wad dashboard tahun 2026.
+                // Tahun 2027 menggunakan senarai 34 tab wad dalam RETEN HMI 2027.
                 if (year === '2027') {
-                    entryWard.innerHTML = '<option value="WAD REHAB">WAD REHAB</option>';
-                    entryWard.value = 'WAD REHAB';
+                    entryWard.innerHTML = '<option value="">Pilih wad</option>' +
+                        HMI_2027_WARDS.map(nama => '<option value="' + escapeHTML(nama) + '">' + escapeHTML(nama) + '</option>').join('');
+                    entryWard.value = '';
                 } else {
                     entryWard.innerHTML = wardSelect ? wardSelect.innerHTML : '<option value="">Pilih wad</option>';
                     entryWard.value = '';
