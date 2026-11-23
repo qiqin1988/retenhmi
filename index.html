@@ -1349,6 +1349,12 @@
                 syncAdminUI();
                 setAdminLoginMessage('Anda telah log keluar.', 'success');
             }
+            // Fungsi ini dipanggil oleh atribut onclick/onsubmit dalam HTML.
+            // Oleh sebab kod berada dalam DOMContentLoaded, eksport ke window diperlukan.
+            window.openAdminLogin = openAdminLogin;
+            window.closeAdminLogin = closeAdminLogin;
+            window.submitAdminLogin = submitAdminLogin;
+            window.logoutAdmin = logoutAdmin;
             window.addEventListener('message', function(event) {
                 // Apps Script HtmlService mungkin menghantar mesej dari iframe dalaman Google.
                 // Sahkan format mesej, bukan event.source.
