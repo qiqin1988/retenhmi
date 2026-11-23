@@ -1166,8 +1166,19 @@
                 const button = document.getElementById('saveKemudahanButton');
                 const year = document.getElementById('entryYear').value;
                 const monthSelect = document.getElementById('entryMonth');
-                // Gunakan wad yang dipilih dalam borang untuk semua rekod Tahun 2027.
-                const wardId = document.getElementById('entryWard').value;
+                // Tahun 2027 mesti menghantar NAMA TAB, bukan ID spreadsheet.
+                const entryWardSelect = document.getElementById('entryWard');
+                const selectedWardValue = String(entryWardSelect.value || '').trim();
+                const selectedWardText = String(
+                    entryWardSelect.options[entryWardSelect.selectedIndex]?.textContent || ''
+                ).trim();
+                const wardId = year === '2027'
+                    ? (HMI_2027_WARDS.includes(selectedWardValue)
+                        ? selectedWardValue
+                        : (HMI_2027_WARDS.includes(selectedWardText)
+                            ? selectedWardText
+                            : selectedWardValue))
+                    : selectedWardValue;
                 const token = sessionStorage.getItem('hmiAdminToken');
                 const statuses = KEMUDAHAN_ITEMS.map((_,i) => {
                     const selected = document.querySelector('input[name="kemudahan_'+i+'"]:checked');
@@ -1186,6 +1197,11 @@
                 }
                 if (!wardId) {
                     msg.textContent = 'Sila pilih wad.';
+                    msg.classList.remove('hidden');
+                    return;
+                }
+                if (year === '2027' && !HMI_2027_WARDS.includes(wardId)) {
+                    msg.textContent = 'Pilihan wad tidak sah. Sila tutup borang, muat semula halaman (Ctrl + F5), kemudian pilih nama wad sekali lagi.';
                     msg.classList.remove('hidden');
                     return;
                 }
