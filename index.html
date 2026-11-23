@@ -1159,8 +1159,10 @@
                 msg.classList.remove('hidden');
             }
 
+            let saveResponseTimer = null;
             function submitKemudahanEntry(event) {
                 event.preventDefault();
+                if (document.getElementById('saveKemudahanButton').disabled) return;
                 const msg = document.getElementById('kemudahanEntryPreview');
                 const button = document.getElementById('saveKemudahanButton');
                 const year = document.getElementById('entryYear').value;
@@ -1228,6 +1230,15 @@
                 msg.textContent = 'Sedang menyimpan rekod ke Google Sheets...';
                 msg.classList.remove('hidden');
                 document.getElementById('hmiSavePostForm').submit();
+                if (saveResponseTimer) clearTimeout(saveResponseTimer);
+                saveResponseTimer = setTimeout(() => {
+                    button.disabled = false;
+                    button.textContent = 'Simpan ke Sheet 2027';
+                    msg.textContent = 'Belum menerima pengesahan daripada Google Sheets. Jangan hantar semula dahulu. Semak tab wad dan Execution log Apps Script.';
+                    msg.classList.remove('hidden');
+                    msg.classList.remove('text-emerald-700');
+                    msg.classList.add('text-rose-700');
+                }, 20000);
             }
             window.updateKemudahanPreview = updateKemudahanPreview;
             function openAddRecordModal() {
@@ -1344,12 +1355,15 @@
                 const data = event.data;
                 if (!data || !data.result) return;
                 if (data.type === 'HMI_SAVE_KEMUDAHAN') {
+                    if (saveResponseTimer) { clearTimeout(saveResponseTimer); saveResponseTimer = null; }
                     const saveButton = document.getElementById('saveKemudahanButton');
                     saveButton.disabled = false;
                     saveButton.textContent = 'Simpan ke Sheet 2027';
                     const saveMessage = document.getElementById('kemudahanEntryPreview');
                     saveMessage.textContent = data.result.message || (data.result.success ? 'Rekod berjaya disimpan.' : 'Rekod gagal disimpan.');
                     saveMessage.classList.remove('hidden');
+                    saveMessage.classList.toggle('text-emerald-700', !!data.result.success);
+                    saveMessage.classList.toggle('text-rose-700', !data.result.success);
                     if (data.result.success) {
                         const cacheKey = document.getElementById('entryWard').value + '::KEMUDAHAN';
                         delete wardCategoryCache[cacheKey];
