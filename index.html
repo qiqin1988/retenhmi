@@ -235,6 +235,41 @@
             </form>
         </div>
     </div>
+    <div id="orientasiEntryModal" class="modal-backdrop hidden" onclick="closeOrientasiModal(event)">
+        <div class="modal-card" style="max-height:92vh;overflow-y:auto" onclick="event.stopPropagation()">
+            <div class="flex items-start justify-between gap-4 pb-4 border-b border-slate-100">
+                <div><p class="section-label">PENGURUSAN DATA HMI</p><h3 class="dashboard-heading text-xl font-bold text-slate-900 mt-1">Tambah Rekod Orientasi</h3><p class="text-sm text-slate-500 mt-1">Kemasukan jumlah pesakit Islam mengikut bulan dan wad</p></div>
+                <button type="button" onclick="closeOrientasiModal()" class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600"><i class="ph ph-x"></i></button>
+            </div>
+            <form id="orientasiEntryForm" class="py-5 space-y-4" onsubmit="submitOrientasiEntry(event)">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <label class="text-sm font-semibold text-slate-600">Tahun
+                        <input id="orientasiYear" class="filter-control w-full mt-1" value="2027" readonly>
+                    </label>
+                    <label class="text-sm font-semibold text-slate-600">Bulan
+                        <select id="orientasiMonth" class="filter-control w-full mt-1" required>
+                            <option value="">Pilih bulan</option><option>Januari</option><option>Februari</option><option>Mac</option><option>April</option><option>Mei</option><option>Jun</option><option>Julai</option><option>Ogos</option><option>September</option><option>Oktober</option><option>November</option><option>Disember</option>
+                        </select>
+                    </label>
+                    <label class="text-sm font-semibold text-slate-600 sm:col-span-2">Wad
+                        <select id="orientasiWard" class="filter-control w-full mt-1" required><option value="">Pilih wad</option></select>
+                    </label>
+                    <label class="text-sm font-semibold text-slate-600">Jumlah pesakit Islam masuk wad
+                        <input id="orientasiMasuk" type="number" min="0" step="1" class="filter-control w-full mt-1" placeholder="0" required>
+                    </label>
+                    <label class="text-sm font-semibold text-slate-600">Jumlah pesakit menerima orientasi
+                        <input id="orientasiDiterima" type="number" min="0" step="1" class="filter-control w-full mt-1" placeholder="0" required>
+                    </label>
+                </div>
+                <p class="text-xs text-slate-500">Peratusan orientasi dikira secara automatik berdasarkan jumlah pesakit yang masuk wad.</p>
+                <div id="orientasiEntryMessage" class="hidden rounded-xl p-3 text-sm font-semibold" aria-live="polite"></div>
+                <div class="flex flex-col sm:flex-row justify-end gap-2">
+                    <button type="button" onclick="closeOrientasiModal()" class="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-bold text-slate-600">Tutup</button>
+                    <button id="saveOrientasiButton" type="submit" class="rounded-xl px-5 py-2.5 text-sm font-bold text-white" style="background:#76539b">Simpan Rekod Orientasi</button>
+                </div>
+            </form>
+        </div>
+    </div>
     <div id="detailModal" class="modal-backdrop hidden" onclick="closeDetail(event)">
         <div class="modal-card" onclick="event.stopPropagation()">
             <div class="flex items-start justify-between gap-4 pb-4 border-b border-slate-100">
@@ -1275,6 +1310,10 @@
             window.submitKemudahanEntry = submitKemudahanEntry;
             window.updateKemudahanPreview = updateKemudahanPreview;
             function openAddRecordModal() {
+                if (String(selectedTab || '').toUpperCase().includes('ORIENTASI')) {
+                    openOrientasiModal();
+                    return;
+                }
                 if (!sessionStorage.getItem('hmiAdminToken')) { alert('Sila log masuk sebagai Admin terlebih dahulu.'); return; }
                 const activeCategory = (document.querySelector('.category-btn.active span') || {}).textContent || 'Kemudahan';
                 if (!/kemudahan/i.test(activeCategory)) { alert('Borang tambah rekod ini buat masa ini disediakan untuk kategori Kemudahan sahaja.'); return; }
@@ -1322,6 +1361,59 @@
             }
             window.openAddRecordModal = openAddRecordModal;
             window.closeAddRecordModal = closeAddRecordModal;
+            function openOrientasiModal() {
+                if (!sessionStorage.getItem('hmiAdminToken')) { alert('Sila log masuk sebagai Admin terlebih dahulu.'); return; }
+                if (selectedYear !== '2027') { alert('Tambah rekod Orientasi hanya diaktifkan untuk Tahun 2027.'); return; }
+                const source = document.getElementById('wardFilter');
+                const target = document.getElementById('orientasiWard');
+                target.innerHTML = source ? source.innerHTML : '<option value="">Pilih wad</option>';
+                target.value = '';
+                document.getElementById('orientasiEntryForm').reset();
+                document.getElementById('orientasiYear').value = '2027';
+                const msg = document.getElementById('orientasiEntryMessage');
+                msg.textContent = ''; msg.className = 'hidden rounded-xl p-3 text-sm font-semibold';
+                const btn = document.getElementById('saveOrientasiButton');
+                btn.disabled = false; btn.textContent = 'Simpan Rekod Orientasi';
+                const modal = document.getElementById('orientasiEntryModal');
+                modal.classList.remove('hidden'); modal.classList.add('flex');
+            }
+            function closeOrientasiModal(event) {
+                if (event && event.target !== document.getElementById('orientasiEntryModal')) return;
+                const modal = document.getElementById('orientasiEntryModal');
+                modal.classList.add('hidden'); modal.classList.remove('flex');
+            }
+            function submitOrientasiEntry(event) {
+                event.preventDefault();
+                const btn = document.getElementById('saveOrientasiButton');
+                if (btn.disabled) return;
+                const msg = document.getElementById('orientasiEntryMessage');
+                const token = sessionStorage.getItem('hmiAdminToken');
+                const ward = document.getElementById('orientasiWard').value;
+                const month = document.getElementById('orientasiMonth').selectedIndex - 1;
+                const masuk = Number(document.getElementById('orientasiMasuk').value);
+                const orientasi = Number(document.getElementById('orientasiDiterima').value);
+                const showError = t => { msg.textContent=t; msg.className='rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm font-semibold text-rose-700'; };
+                if (!token) return showError('Sesi Admin tiada atau tamat. Sila log masuk semula.');
+                if (!ward) return showError('Sila pilih wad.');
+                if (month < 0 || month > 11) return showError('Sila pilih bulan.');
+                if (!Number.isInteger(masuk) || masuk < 0 || !Number.isInteger(orientasi) || orientasi < 0) return showError('Masukkan jumlah pesakit dalam nombor bulat yang sah.');
+                if (orientasi > masuk) return showError('Jumlah pesakit menerima orientasi tidak boleh melebihi jumlah pesakit masuk wad.');
+                const form = document.getElementById('hmiOrientasiPostForm');
+                form.action = window.HMI_API_URL;
+                document.getElementById('hmiOrientasiToken').value = token;
+                document.getElementById('hmiOrientasiWard').value = ward;
+                document.getElementById('hmiOrientasiMonth').value = String(month);
+                document.getElementById('hmiOrientasiMasuk').value = String(masuk);
+                document.getElementById('hmiOrientasiDiterima').value = String(orientasi);
+                btn.disabled = true; btn.textContent = 'Menyimpan...';
+                msg.textContent = 'Sedang menyimpan rekod ke Google Sheets...';
+                msg.className = 'rounded-xl border border-violet-200 bg-violet-50 p-3 text-sm font-semibold text-violet-700';
+                form.submit();
+            }
+            window.openOrientasiModal = openOrientasiModal;
+            window.closeOrientasiModal = closeOrientasiModal;
+            window.submitOrientasiEntry = submitOrientasiEntry;
+
             let adminLoginPending = false;
             function openAdminLogin() {
                 const modal = document.getElementById('adminLoginModal');
@@ -1409,6 +1501,20 @@
                         if (selectedYear === '2027' && selectedWardId === document.getElementById('entryWard').value) {
                             loadSelectedData();
                         }
+                    }
+                    return;
+                }
+                if (data.type === 'HMI_SAVE_ORIENTASI') {
+                    const btn = document.getElementById('saveOrientasiButton');
+                    btn.disabled = false; btn.textContent = 'Simpan Rekod Orientasi';
+                    const msg = document.getElementById('orientasiEntryMessage');
+                    msg.textContent = data.result.message || (data.result.success ? 'Rekod orientasi berjaya disimpan.' : 'Rekod gagal disimpan.');
+                    msg.className = 'rounded-xl border p-3 text-sm font-semibold ' + (data.result.success ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-rose-200 bg-rose-50 text-rose-700');
+                    if (data.result.success) {
+                        const ward = document.getElementById('orientasiWard').value;
+                        delete wardCategoryCache[ward + '::ORIENTASI'];
+                        delete allWardChartCache['ORIENTASI'];
+                        if (selectedYear === '2027' && selectedWardId === ward && selectedTab === 'ORIENTASI') loadSelectedData();
                     }
                     return;
                 }
@@ -1551,6 +1657,14 @@ nav .rounded-xl, nav .rounded-full {
         <input type="hidden" name="statuses" id="hmiSaveStatuses">
         <input type="hidden" name="officer" id="hmiSaveOfficer">
         <input type="hidden" name="preparedBy" id="hmiSavePreparedBy">
+    </form>
+    <form id="hmiOrientasiPostForm" method="post" target="hmiSaveFrame" class="hidden">
+        <input type="hidden" name="action" value="saveOrientasi2027">
+        <input type="hidden" name="token" id="hmiOrientasiToken">
+        <input type="hidden" name="id" id="hmiOrientasiWard">
+        <input type="hidden" name="monthIndex" id="hmiOrientasiMonth">
+        <input type="hidden" name="masuk" id="hmiOrientasiMasuk">
+        <input type="hidden" name="orientasi" id="hmiOrientasiDiterima">
     </form>
     <form id="hmiAdminPostForm" method="post" target="hmiAdminLoginFrame" class="hidden">
         <input type="hidden" name="action" value="adminLogin">
