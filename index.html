@@ -198,6 +198,9 @@
                 <button type="button" id="chooseOrientasiCategory" onclick="chooseAddRecordCategory('ORIENTASI')" class="rounded-2xl border border-teal-200 bg-teal-50 hover:bg-teal-100 p-5 text-left transition">
                     <i class="ph ph-book-open-text text-2xl text-teal-700"></i><span class="block mt-2 font-bold text-slate-800">Orientasi</span><span class="block mt-1 text-xs text-slate-500">Pesakit Islam menerima orientasi</span>
                 </button>
+                <button type="button" id="choosePrivilegingCategory" onclick="chooseAddRecordCategory('PRIVILEGING')" class="rounded-2xl border border-amber-200 bg-amber-50 hover:bg-amber-100 p-5 text-left transition">
+                    <i class="ph ph-certificate text-2xl text-amber-700"></i><span class="block mt-2 font-bold text-slate-800">Privileging</span><span class="block mt-1 text-xs text-slate-500">Bilangan staf dilantik dan staf Islam</span>
+                </button>
             </div>
             <p id="addCategoryNote" class="text-xs text-slate-500 mt-4"></p>
         </div>
@@ -305,6 +308,44 @@
                 <div class="flex flex-col sm:flex-row justify-end gap-2">
                     <button type="button" onclick="closeOrientasiModal()" class="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-bold text-slate-600">Tutup</button>
                     <button id="saveOrientasiButton" type="submit" class="rounded-xl px-5 py-2.5 text-sm font-bold text-white" style="background:#76539b">Simpan Rekod Orientasi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div id="privilegingEntryModal" class="modal-backdrop hidden" onclick="closePrivilegingModal(event)">
+        <div class="modal-card" style="max-height:92vh;overflow-y:auto" onclick="event.stopPropagation()">
+            <div class="flex items-start justify-between gap-4 pb-4 border-b border-slate-100">
+                <div><p class="section-label">PENGURUSAN DATA HMI</p><h3 class="dashboard-heading text-xl font-bold text-slate-900 mt-1">Tambah Rekod Privileging</h3><p class="text-sm text-slate-500 mt-1">Kemasukan bilangan staf yang dilantik mengikut bulan dan wad</p></div>
+                <button type="button" onclick="closePrivilegingModal()" class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600"><i class="ph ph-x"></i></button>
+            </div>
+            <form id="privilegingEntryForm" class="py-5 space-y-4" onsubmit="submitPrivilegingEntry(event)">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <label class="text-sm font-semibold text-slate-600">Tahun
+                        <input id="privilegingYear" class="filter-control w-full mt-1" value="2027" readonly>
+                    </label>
+                    <label class="text-sm font-semibold text-slate-600">Bulan
+                        <select id="privilegingMonth" class="filter-control w-full mt-1" required>
+                            <option value="">Pilih bulan</option><option>Januari</option><option>Februari</option><option>Mac</option><option>April</option><option>Mei</option><option>Jun</option><option>Julai</option><option>Ogos</option><option>September</option><option>Oktober</option><option>November</option><option>Disember</option>
+                        </select>
+                    </label>
+                    <label class="text-sm font-semibold text-slate-600 sm:col-span-2">Wad
+                        <select id="privilegingWard" class="filter-control w-full mt-1" required><option value="">Pilih wad</option></select>
+                    </label>
+                    <label class="text-sm font-semibold text-slate-600 sm:col-span-2">Pegawai bertanggungjawab
+                        <input id="privilegingOfficer" type="text" maxlength="120" class="filter-control w-full mt-1" placeholder="Nama pegawai" required>
+                    </label>
+                    <label class="text-sm font-semibold text-slate-600">Bilangan staf yang dilantik
+                        <input id="privilegingAppointed" type="number" min="0" step="1" class="filter-control w-full mt-1" placeholder="0" required>
+                    </label>
+                    <label class="text-sm font-semibold text-slate-600">Jumlah staf beragama Islam
+                        <input id="privilegingMuslim" type="number" min="0" step="1" class="filter-control w-full mt-1" placeholder="0" required>
+                    </label>
+                </div>
+                <p class="text-xs text-slate-500">Peratusan bulanan dikira secara automatik dalam Google Sheet: bilangan staf dilantik ÷ jumlah staf beragama Islam × 100.</p>
+                <div id="privilegingEntryMessage" class="hidden rounded-xl p-3 text-sm font-semibold" aria-live="polite"></div>
+                <div class="flex flex-col sm:flex-row justify-end gap-2">
+                    <button type="button" onclick="closePrivilegingModal()" class="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-bold text-slate-600">Tutup</button>
+                    <button id="savePrivilegingButton" type="submit" class="rounded-xl px-5 py-2.5 text-sm font-bold text-white" style="background:#9a6a2f">Simpan Rekod Privileging</button>
                 </div>
             </form>
         </div>
@@ -430,7 +471,7 @@
                     const meta = getMeta(name);
                     const btn = document.createElement('button');
                     btn.className = 'category-btn' + (name === selectedTab ? ' active' : '');
-                    const pending2027 = selectedYear === '2027' && ['PRIVILEGING','ADVERSE EVENT','DATA KEHADIRAN KURSUS'].includes(name);
+                    const pending2027 = selectedYear === '2027' && ['ADVERSE EVENT','DATA KEHADIRAN KURSUS'].includes(name);
                     btn.innerHTML = '<i class="ph ' + meta.icon + ' text-lg"></i><span>' + escapeHTML(meta.label) + (pending2027 ? '<small class="block text-[9px] opacity-70 font-semibold">BELUM DIAKTIFKAN</small>' : '') + '</span>';
                     btn.title = pending2027 ? 'Spreadsheet kategori ini belum dikonfigurasikan untuk 2027' : meta.desc;
                     btn.onclick = () => selectTab(name);
@@ -456,7 +497,7 @@
                 document.getElementById('statusFilter').value = 'all';
                 document.getElementById('monthFilter').value = 'all';
                 buildCategoryNav();
-                if (selectedYear === '2027' && ['PRIVILEGING','ADVERSE EVENT','DATA KEHADIRAN KURSUS'].includes(name)) {
+                if (selectedYear === '2027' && ['ADVERSE EVENT','DATA KEHADIRAN KURSUS'].includes(name)) {
                     const view = document.getElementById('dataView');
                     totalWards = 0;
                     document.getElementById('wardFilter').innerHTML = '<option value="">Belum tersedia</option>';
@@ -1383,8 +1424,10 @@
                 const latihanButton = document.getElementById('chooseLatihanCategory');
                 if (orientasiButton) orientasiButton.style.display = selectedYear === '2027' ? '' : 'none';
                 if (latihanButton) latihanButton.style.display = selectedYear === '2027' ? '' : 'none';
+                const privilegingButton = document.getElementById('choosePrivilegingCategory');
+                if (privilegingButton) privilegingButton.style.display = selectedYear === '2027' ? '' : 'none';
                 if (note) note.textContent = selectedYear === '2027'
-                    ? 'Tahun 2027: kategori Kemudahan, Orientasi dan Latihan tersedia.'
+                    ? 'Tahun 2027: kategori Kemudahan, Orientasi, Latihan dan Privileging tersedia.'
                     : 'Kategori tambah rekod hanya tersedia untuk tahun 2027.';
                 const modal = document.getElementById('addCategoryModal');
                 modal.classList.remove('hidden'); modal.classList.add('flex');
@@ -1402,6 +1445,10 @@
                 }
                 if (category === 'LATIHAN') {
                     openLatihanModal();
+                    return;
+                }
+                if (category === 'PRIVILEGING') {
+                    openPrivilegingModal();
                     return;
                 }
                 openKemudahanModal();
@@ -1573,6 +1620,95 @@
             window.closeOrientasiModal = closeOrientasiModal;
             window.submitOrientasiEntry = submitOrientasiEntry;
 
+            function openPrivilegingModal() {
+                if (!sessionStorage.getItem('hmiAdminToken')) {
+                    alert('Sila log masuk sebagai Admin terlebih dahulu.');
+                    return;
+                }
+                if (selectedYear !== '2027') {
+                    alert('Tambah rekod Privileging hanya diaktifkan untuk Tahun 2027.');
+                    return;
+                }
+                const wardSelect = document.getElementById('privilegingWard');
+                wardSelect.innerHTML = '<option value="">Pilih wad</option>' +
+                    HMI_2027_WARDS.map(name => '<option value="' + escapeHTML(name) + '">' + escapeHTML(name) + '</option>').join('');
+                document.getElementById('privilegingEntryForm').reset();
+                document.getElementById('privilegingYear').value = '2027';
+                const message = document.getElementById('privilegingEntryMessage');
+                message.textContent = '';
+                message.className = 'hidden rounded-xl p-3 text-sm font-semibold';
+                const button = document.getElementById('savePrivilegingButton');
+                button.disabled = false;
+                button.textContent = 'Simpan Rekod Privileging';
+                const modal = document.getElementById('privilegingEntryModal');
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+
+            function closePrivilegingModal(event) {
+                if (event && event.target !== document.getElementById('privilegingEntryModal')) return;
+                const modal = document.getElementById('privilegingEntryModal');
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+
+            function submitPrivilegingEntry(event) {
+                event.preventDefault();
+                const button = document.getElementById('savePrivilegingButton');
+                if (button.disabled) return;
+
+                const message = document.getElementById('privilegingEntryMessage');
+                const token = sessionStorage.getItem('hmiAdminToken');
+                const ward = document.getElementById('privilegingWard').value;
+                const month = document.getElementById('privilegingMonth').selectedIndex - 1;
+                const appointed = Number(document.getElementById('privilegingAppointed').value);
+                const muslim = Number(document.getElementById('privilegingMuslim').value);
+                const officer = document.getElementById('privilegingOfficer').value.trim();
+
+                const showError = text => {
+                    message.textContent = text;
+                    message.className = 'rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm font-semibold text-rose-700';
+                };
+
+                if (!token) return showError('Sesi Admin tiada atau tamat. Sila log masuk semula.');
+                if (!ward || !HMI_2027_WARDS.includes(ward)) return showError('Sila pilih wad yang sah.');
+                if (month < 0 || month > 11) return showError('Sila pilih bulan.');
+                if (!officer) return showError('Sila isi nama Pegawai Bertanggungjawab.');
+                if (![appointed, muslim].every(value => Number.isInteger(value) && value >= 0)) {
+                    return showError('Kedua-dua jumlah mesti nombor bulat sifar atau lebih.');
+                }
+                if (appointed > muslim) return showError('Bilangan staf yang dilantik tidak boleh melebihi jumlah staf beragama Islam.');
+                if (muslim === 0 && appointed > 0) return showError('Jumlah staf beragama Islam mesti melebihi sifar jika ada staf dilantik.');
+
+                const form = document.getElementById('hmiPrivilegingPostForm');
+                form.action = window.HMI_API_URL;
+                document.getElementById('hmiPrivilegingToken').value = token;
+                document.getElementById('hmiPrivilegingWard').value = ward;
+                document.getElementById('hmiPrivilegingMonth').value = String(month);
+                document.getElementById('hmiPrivilegingAppointed').value = String(appointed);
+                document.getElementById('hmiPrivilegingMuslim').value = String(muslim);
+                document.getElementById('hmiPrivilegingOfficer').value = officer;
+
+                button.disabled = true;
+                button.textContent = 'Menyimpan...';
+                message.textContent = 'Sedang menyimpan rekod ke Google Sheets PRIVILEGING 2027...';
+                message.className = 'rounded-xl border border-violet-200 bg-violet-50 p-3 text-sm font-semibold text-violet-700';
+                form.submit();
+
+                if (privilegingSaveResponseTimer) clearTimeout(privilegingSaveResponseTimer);
+                privilegingSaveResponseTimer = setTimeout(() => {
+                    button.disabled = false;
+                    button.textContent = 'Simpan Rekod Privileging';
+                    message.textContent = 'Belum menerima pengesahan daripada Google Sheets. Semak tab wad sebelum cuba simpan semula.';
+                    message.className = 'rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm font-semibold text-rose-700';
+                }, 20000);
+            }
+
+            window.openPrivilegingModal = openPrivilegingModal;
+            window.closePrivilegingModal = closePrivilegingModal;
+            window.submitPrivilegingEntry = submitPrivilegingEntry;
+
+            let privilegingSaveResponseTimer = null;
             let adminLoginPending = false;
             function openAdminLogin() {
                 const modal = document.getElementById('adminLoginModal');
@@ -1689,6 +1825,28 @@
                         delete wardCategoryCache[ward + '::ORIENTASI'];
                         delete allWardChartCache['ORIENTASI'];
                         if (selectedYear === '2027' && selectedWardId === ward && selectedTab === 'ORIENTASI') loadSelectedData();
+                    }
+                    return;
+                }
+                if (data.type === 'HMI_SAVE_PRIVILEGING') {
+                    if (privilegingSaveResponseTimer) {
+                        clearTimeout(privilegingSaveResponseTimer);
+                        privilegingSaveResponseTimer = null;
+                    }
+                    const button = document.getElementById('savePrivilegingButton');
+                    button.disabled = false;
+                    button.textContent = 'Simpan Rekod Privileging';
+                    const message = document.getElementById('privilegingEntryMessage');
+                    message.textContent = data.result.message || (data.result.success ? 'Rekod Privileging berjaya disimpan.' : 'Rekod gagal disimpan.');
+                    message.className = 'rounded-xl border p-3 text-sm font-semibold ' +
+                        (data.result.success ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-rose-200 bg-rose-50 text-rose-700');
+                    if (data.result.success) {
+                        const ward = document.getElementById('privilegingWard').value;
+                        delete wardCategoryCache[ward + '::PRIVILEGING'];
+                        delete allWardChartCache['PRIVILEGING'];
+                        if (selectedYear === '2027' && selectedWardId === ward && selectedTab === 'PRIVILEGING') {
+                            loadSelectedData();
+                        }
                     }
                     return;
                 }
@@ -1842,6 +2000,15 @@ nav .rounded-xl, nav .rounded-full {
         <input type="hidden" name="monthIndex" id="hmiOrientasiMonth">
         <input type="hidden" name="masuk" id="hmiOrientasiMasuk">
         <input type="hidden" name="orientasi" id="hmiOrientasiDiterima">
+    </form>
+    <form id="hmiPrivilegingPostForm" method="post" target="hmiSaveFrame" class="hidden">
+        <input type="hidden" name="action" value="savePrivileging2027">
+        <input type="hidden" name="token" id="hmiPrivilegingToken">
+        <input type="hidden" name="id" id="hmiPrivilegingWard">
+        <input type="hidden" name="monthIndex" id="hmiPrivilegingMonth">
+        <input type="hidden" name="bilanganStaf" id="hmiPrivilegingAppointed">
+        <input type="hidden" name="stafIslam" id="hmiPrivilegingMuslim">
+        <input type="hidden" name="officer" id="hmiPrivilegingOfficer">
     </form>
     <form id="hmiAdminPostForm" method="post" target="hmiAdminLoginFrame" class="hidden">
         <input type="hidden" name="action" value="adminLogin">
