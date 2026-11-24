@@ -49,62 +49,110 @@
         .table-container thead th { position:sticky; top:0; z-index:2; background:#f8fafc; }
         .section-label { letter-spacing:.08em; font-size:.68rem; font-weight:700; text-transform:uppercase; color:#64748b; }
         .soft-divider { border-color:#eef2f7; }
+
+        /* RETEN HMI sidebar layout — visual/navigation shell only */
+        .dashboard-layout{display:grid;grid-template-columns:258px minmax(0,1fr);gap:24px;align-items:start}
+        .category-sidebar{position:sticky;top:98px;min-height:calc(100vh - 125px);padding:18px 14px;border:1px solid rgba(255,255,255,.9);border-radius:24px;background:rgba(255,255,255,.72);box-shadow:0 14px 38px rgba(48,91,111,.08);backdrop-filter:blur(22px) saturate(160%);-webkit-backdrop-filter:blur(22px) saturate(160%);display:flex;flex-direction:column}
+        .sidebar-brand{display:flex;align-items:center;gap:11px;padding:7px 7px 20px;border-bottom:1px solid #e8eef2}
+        .sidebar-brand-icon{width:42px;height:42px;border-radius:14px;display:flex;align-items:center;justify-content:center;background:linear-gradient(145deg,#dff5f1,#e8efff);color:#087f79;font-size:1.35rem}
+        .sidebar-eyebrow,.sidebar-section-label{font-size:.62rem;letter-spacing:.13em;font-weight:800;color:#81909e}
+        .sidebar-brand h2{font-family:'Poppins',sans-serif;font-size:.91rem;font-weight:700;color:#203449}
+        .sidebar-section-label{padding:19px 9px 9px}
+        .category-nav{display:flex;flex-direction:column;gap:6px;overflow:visible;padding:0}
+        .category-btn{width:100%;min-width:0;display:flex;justify-content:flex-start;text-align:left;padding:12px 13px;border-radius:13px;border:1px solid transparent;background:transparent;color:#536578;box-shadow:none;font-size:.78rem;white-space:normal}
+        .category-btn i{width:22px;flex:0 0 22px;text-align:center;font-size:1.15rem}
+        .category-btn span{display:block;line-height:1.35}
+        .category-btn:hover{background:#edf7f6;color:#087f79;transform:translateX(2px)}
+        .category-btn.active{background:linear-gradient(110deg,#e1f4f1,#edf2ff)!important;color:#087f79!important;border-color:#d4ece8!important;box-shadow:inset 3px 0 #159b91!important}
+        .category-btn.active small{color:#718096}
+        .sidebar-footnote{display:flex;align-items:center;gap:10px;margin-top:auto;padding:14px 10px 4px;border-top:1px solid #e8eef2;color:#0b8c76}
+        .sidebar-footnote>i{font-size:1.35rem}
+        .sidebar-footnote span{display:flex;flex-direction:column;gap:2px}
+        .sidebar-footnote strong{font-size:.7rem;color:#456477}
+        .sidebar-footnote small{font-size:.62rem;color:#91a0ad}
+        .dashboard-content{min-width:0}
+        @media(max-width:1023px){.dashboard-layout{grid-template-columns:1fr;gap:0}.category-sidebar{position:relative;top:auto;min-height:0;margin-bottom:18px;display:none}.category-sidebar.is-open{display:flex}.category-nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.sidebar-footnote{margin-top:15px}}
+        @media(max-width:480px){.category-nav{grid-template-columns:1fr}.category-btn{padding:11px 12px}.hero-panel{border-radius:22px}}
+        @media print{.category-sidebar,#sidebarToggle{display:none!important}.dashboard-layout{display:block}}
+
     </style>
 </head>
 <body class="text-slate-800 antialiased">
-    <nav class="sticky top-0 z-50 bg-gradient-to-r from-[#e8f8f7]/98 via-white/95 to-[#e8f8f7]/98 backdrop-blur-xl border-b border-teal-100 shadow-[0_2px_12px_rgba(15,118,110,0.06)]">
-        <div class="max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8 h-[88px] sm:h-[96px] flex items-center justify-between gap-4">
-            <div class="flex items-center gap-4 sm:gap-5 min-w-0">
-                <div class="w-16 h-16 sm:w-[76px] sm:h-[76px] rounded-2xl bg-white flex items-center justify-center shadow-md border border-teal-100 shrink-0 overflow-hidden">
+    <nav class="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-200/70 shadow-sm">
+        <div class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 h-[78px] flex items-center justify-between gap-4">
+            <div class="flex items-center gap-3 sm:gap-4 min-w-0">
+                <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white flex items-center justify-center shadow-sm border border-slate-200 shrink-0 overflow-hidden">
                     <img src="./hmi-logo-small.jpg?v=2" alt="Logo Hospital Mesra Ibadah" class="w-full h-full object-contain">
                 </div>
                 <div class="min-w-0">
-                    <p class="text-[11px] sm:text-sm font-extrabold tracking-[.14em] text-teal-700 uppercase">Hospital Pulau Pinang</p>
-                    <h1 class="brand-heading text-lg sm:text-2xl font-extrabold text-slate-900 leading-tight">Program Hospital Mesra Ibadah (HMI)</h1>
-                    <p id="navYearLabel" class="hidden sm:block text-sm text-slate-500 mt-0.5">Dashboard Pemantauan Reten • 2026</p>
+                    <p class="text-[10px] sm:text-xs font-extrabold tracking-[.16em] text-teal-700 uppercase">Hospital Pulau Pinang</p>
+                    <h1 class="brand-heading text-base sm:text-xl font-extrabold text-slate-900 leading-tight">Program Hospital Mesra Ibadah (HMI)</h1>
+                    <p id="navYearLabel" class="hidden sm:block text-xs text-slate-500 mt-0.5">Dashboard Pemantauan Reten • 2026</p>
                 </div>
             </div>
-            <div class="flex items-center gap-2 sm:gap-4">
-                <button type="button" id="adminLoginButton" onclick="openAdminLogin()" aria-label="Log masuk Admin" title="Log masuk Admin" class="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white border border-teal-100 shadow-sm flex items-center justify-center text-blue-700 font-bold hover:bg-teal-50 hover:shadow-md transition">
+            <div class="flex items-center gap-2">
+                <span class="hidden md:inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700 border border-emerald-100"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> Data berpusat</span>
+                <button type="button" id="adminLoginButton" onclick="openAdminLogin()" aria-label="Log masuk Admin" title="Log masuk Admin" class="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white border border-slate-200 shadow-sm flex items-center justify-center text-teal-700 font-bold hover:bg-teal-50 transition">
                     <i id="adminLoginIcon" class="ph ph-user text-xl"></i>
                 </button>
             </div>
         </div>
     </nav>
 
-    <main class="max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-        <section class="hero-panel rounded-3xl p-5 sm:p-7 mb-6 overflow-hidden relative">
-            <div class="relative z-10 flex flex-col lg:flex-row lg:items-end justify-between gap-5">
-                <div>
-                    <div class="flex flex-wrap items-center gap-2 mb-3">
-                        <span class="badge-soft"><i class="ph-fill ph-shield-check"></i> RETEN HMI</span>
-                        <span id="heroYearLabel" class="text-xs font-semibold text-white/70">TAHUN PEMANTAUAN 2026</span>
-                    </div>
-                    <h2 class="dashboard-heading text-2xl sm:text-4xl font-bold text-white tracking-tight">Pemantauan Hospital Mesra Ibadah (HMI)</h2>
-                    <p id="heroYearDescription" class="text-sm sm:text-base text-white/75 mt-2 max-w-2xl">Pemantauan berpusat pelaksanaan dan pencapaian Program Hospital Mesra Ibadah bagi tahun 2026.</p>
-                </div>
-                <div class="flex flex-wrap gap-2">
-                    <button onclick="fetchTabList()" class="action-btn light"><i class="ph ph-arrows-clockwise"></i> Segar Semula</button>
-                    <button onclick="window.print()" class="action-btn light"><i class="ph ph-download-simple"></i> Cetak / PDF</button>
-                </div>
-            </div>
-            <div class="hero-glow"></div>
-        </section>
-
-        <section class="hidden" aria-hidden="true">
-            <div class="kpi-card"><div class="kpi-icon blue"><i class="ph ph-folders"></i></div><p>Kategori Reten</p><strong id="kpiTabs">—</strong><span>tab dipantau</span></div>
-            <div class="kpi-card"><div class="kpi-icon green"><i class="ph ph-check-circle"></i></div><p>Lengkap / Ada</p><strong id="kpiComplete">—</strong><span id="kpiCompletePct">daripada data dipaparkan</span></div>
-            <div class="kpi-card"><div class="kpi-icon red"><i class="ph ph-x-circle"></i></div><p>Tidak Lengkap</p><strong id="kpiIncomplete">—</strong><span id="kpiIncompletePct">daripada data dipaparkan</span></div>
-            <div class="kpi-card"><div class="kpi-icon slate"><i class="ph ph-database"></i></div><p>Jumlah Rekod</p><strong id="kpiRows">—</strong><span>keseluruhan kategori</span></div>
-            <div class="kpi-card kpi-live"><div class="kpi-icon live"><i class="ph ph-cloud-check"></i></div><p>Sambungan Data</p><strong>LIVE</strong><span><i class="ph-fill ph-check-circle"></i> Google Sheets</span></div>
-        </section>
-
-        <section class="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div class="category-nav flex-1" id="categoryNav"></div>
-            <button type="button" id="addRecordButton" onclick="openAddRecordModal()" class="hidden shrink-0 inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-bold text-white shadow-lg transition hover:-translate-y-0.5" style="background:linear-gradient(135deg,#76539b,#9a78b8);box-shadow:0 7px 18px rgba(118,83,155,.22)">
-                <i class="ph ph-plus-circle text-lg"></i> Tambah Rekod Baharu
+    <main class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-7">
+        <div class="mb-5 flex items-center justify-between gap-3 lg:hidden">
+            <button type="button" id="sidebarToggle" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm" aria-expanded="false" aria-controls="categorySidebar">
+                <i class="ph ph-list text-lg"></i> Menu kategori
             </button>
-        </section>
+            <span class="text-xs text-slate-500">RETEN HMI</span>
+        </div>
+
+        <div class="dashboard-layout">
+            <aside id="categorySidebar" class="category-sidebar">
+                <div class="sidebar-brand">
+                    <div class="sidebar-brand-icon"><i class="ph ph-squares-four"></i></div>
+                    <div><p class="sidebar-eyebrow">MENU UTAMA</p><h2>Pengurusan Reten</h2></div>
+                </div>
+                <p class="sidebar-section-label">KATEGORI PEMANTAUAN</p>
+                <div class="category-nav" id="categoryNav"></div>
+                <div class="sidebar-footnote">
+                    <i class="ph ph-cloud-check"></i>
+                    <span><strong>Data berpusat</strong><small>Google Sheets · Auto-sync</small></span>
+                </div>
+            </aside>
+
+            <div class="dashboard-content min-w-0">
+                <section class="hero-panel rounded-3xl p-5 sm:p-7 mb-6 overflow-hidden relative">
+                    <div class="relative z-10 flex flex-col lg:flex-row lg:items-end justify-between gap-5">
+                        <div>
+                            <div class="flex flex-wrap items-center gap-2 mb-3">
+                                <span class="badge-soft"><i class="ph-fill ph-shield-check"></i> RETEN HMI</span>
+                                <span id="heroYearLabel" class="text-xs font-semibold text-white/75">TAHUN PEMANTAUAN 2026</span>
+                            </div>
+                            <h2 class="dashboard-heading text-2xl sm:text-4xl font-bold text-white tracking-tight">Pemantauan Hospital Mesra Ibadah (HMI)</h2>
+                            <p id="heroYearDescription" class="text-sm sm:text-base text-white/80 mt-2 max-w-2xl">Pemantauan berpusat pelaksanaan dan pencapaian Program Hospital Mesra Ibadah bagi tahun 2026.</p>
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            <button onclick="fetchTabList()" class="action-btn light"><i class="ph ph-arrows-clockwise"></i> Segar Semula</button>
+                            <button onclick="window.print()" class="action-btn light"><i class="ph ph-download-simple"></i> Cetak / PDF</button>
+                        </div>
+                    </div>
+                    <div class="hero-glow"></div>
+                </section>
+
+                <section class="hidden" aria-hidden="true">
+                    <div class="kpi-card"><div class="kpi-icon blue"><i class="ph ph-folders"></i></div><p>Kategori Reten</p><strong id="kpiTabs">—</strong><span>tab dipantau</span></div>
+                    <div class="kpi-card"><div class="kpi-icon green"><i class="ph ph-check-circle"></i></div><p>Lengkap / Ada</p><strong id="kpiComplete">—</strong><span id="kpiCompletePct">daripada data dipaparkan</span></div>
+                    <div class="kpi-card"><div class="kpi-icon red"><i class="ph ph-x-circle"></i></div><p>Tidak Lengkap</p><strong id="kpiIncomplete">—</strong><span id="kpiIncompletePct">daripada data dipaparkan</span></div>
+                    <div class="kpi-card"><div class="kpi-icon slate"><i class="ph ph-database"></i></div><p>Jumlah Rekod</p><strong id="kpiRows">—</strong><span>keseluruhan kategori</span></div>
+                    <div class="kpi-card kpi-live"><div class="kpi-icon live"><i class="ph ph-cloud-check"></i></div><p>Sambungan Data</p><strong>LIVE</strong><span><i class="ph-fill ph-check-circle"></i> Google Sheets</span></div>
+                </section>
+
+                <section class="mb-6 flex flex-col sm:flex-row sm:items-center justify-end gap-3">
+                    <button type="button" id="addRecordButton" onclick="openAddRecordModal()" class="hidden shrink-0 inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-bold text-white shadow-lg transition hover:-translate-y-0.5" style="background:linear-gradient(135deg,#76539b,#9a78b8);box-shadow:0 7px 18px rgba(118,83,155,.22)">
+                        <i class="ph ph-plus-circle text-lg"></i> Tambah Rekod Baharu
+                    </button>
+                </section>
 
         <section class="glass-card rounded-3xl overflow-hidden mb-6">
             <div class="p-4 sm:p-6 border-b border-slate-100">
@@ -182,6 +230,9 @@
             <p>Program Hospital Mesra Ibadah (HMI) • Hospital Pulau Pinang</p>
             <p class="mt-1">Sumber data: Google Sheets • Paparan berpusat & auto-sync</p>
         </footer>
+
+            </div>
+        </div>
     </main>
 
     <div id="addCategoryModal" class="modal-backdrop hidden" onclick="closeAddCategoryModal(event)">
@@ -391,7 +442,7 @@
         .hmi-table { width:100%; min-width:1050px; border-collapse:separate; border-spacing:0; }.hmi-table th { position:sticky; top:0; z-index:3; background:#f8fafc; color:#50627a; font-size:.68rem; text-transform:uppercase; letter-spacing:.04em; font-weight:800; padding:.8rem .65rem; border-bottom:1px solid #e5eaf0; }.hmi-table td{padding:.72rem .65rem;border-bottom:1px solid #eef2f6;font-size:.78rem;color:#475569;vertical-align:middle}.hmi-table tbody tr:hover{background:#f8fbff}.item-cell{min-width:280px}.item-title{font-weight:700;color:#172b4d}.item-sub{font-size:.68rem;color:#94a3b8;margin-top:.12rem}.status-dot{width:30px;height:30px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;font-size:1rem}.status-dot.complete{background:#dcfce7;color:#16a34a}.status-dot.incomplete{background:#ffe4e6;color:#ef4444}.status-dot.na{background:#eef2f7;color:#94a3b8}.status-dot.text{background:#f1f5f9;color:#475569;font-size:.7rem;font-weight:700;min-width:38px}.progress-track{width:75px;height:7px;background:#e2e8f0;border-radius:99px;overflow:hidden;display:inline-block;vertical-align:middle}.progress-fill{height:100%;background:linear-gradient(90deg,#16a34a,#34d399);border-radius:99px}.view-btn{display:inline-flex;align-items:center;gap:.35rem;border:1px solid #dbe4ef;background:#fff;color:#31557f;border-radius:.65rem;padding:.45rem .65rem;font-size:.7rem;font-weight:700;transition:.2s}.view-btn:hover{background:#eff6ff;border-color:#93c5fd;color:#1d4ed8}
         .mini-stat{background:#f8fafc;border:1px solid #edf1f5;border-radius:1rem;padding:.8rem}.mini-stat span{display:block;color:#94a3b8;font-size:.68rem}.mini-stat strong{display:block;color:#172b4d;font-family:'Poppins',sans-serif;font-size:1.25rem;margin-top:.2rem}
         .modal-backdrop{position:fixed;inset:0;z-index:100;background:rgba(15,23,42,.48);backdrop-filter:blur(5px);display:flex;align-items:center;justify-content:center;padding:1rem}.modal-backdrop.hidden{display:none}.modal-card{width:min(680px,100%);background:#fff;border-radius:1.5rem;padding:1.25rem;box-shadow:0 25px 70px rgba(15,23,42,.25)}
-        @media(max-width:640px){.kpi-card{min-height:128px;padding:.9rem}.kpi-card strong{font-size:1.4rem}.category-btn{min-width:135px}.item-cell{min-width:235px}}
+        @media(max-width:640px){.kpi-card{min-height:128px;padding:.9rem}.kpi-card strong{font-size:1.4rem}.item-cell{min-width:235px}}
         @media print{nav,.action-btn,.category-nav,.search-box,.filter-control,.modal-backdrop{display:none!important}body{background:#fff}.hero-panel{box-shadow:none}.glass-card,.kpi-card{box-shadow:none}.hmi-table{min-width:0}.table-container{overflow:visible}}
     </style>
     <script>
@@ -488,6 +539,18 @@
                 document.getElementById('yearFilter').value = selectedYear;
                 await fetchTabList();
             }
+
+            // Toggle menu kategori pada paparan telefon/tablet.
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            if (sidebarToggle) sidebarToggle.addEventListener('click', function() {
+                const sidebar = document.getElementById('categorySidebar');
+                const opened = sidebar.classList.toggle('is-open');
+                sidebarToggle.setAttribute('aria-expanded', String(opened));
+                sidebarToggle.innerHTML = opened
+                    ? '<i class="ph ph-x text-lg"></i> Tutup menu'
+                    : '<i class="ph ph-list text-lg"></i> Menu kategori';
+            });
+
             window.changeYear = changeYear;
 
             async function selectTab(name) {
