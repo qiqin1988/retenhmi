@@ -194,6 +194,7 @@
                 <button type="button" onclick="chooseAddRecordCategory('KEMUDAHAN')" class="rounded-2xl border border-violet-200 bg-violet-50 hover:bg-violet-100 p-5 text-left transition">
                     <i class="ph ph-house-line text-2xl text-violet-700"></i><span class="block mt-2 font-bold text-slate-800">Kemudahan</span><span class="block mt-1 text-xs text-slate-500">Status kemudahan dan peralatan</span>
                 </button>
+                <button type="button" id="chooseLatihanCategory" onclick="chooseAddRecordCategory('LATIHAN')" class="rounded-2xl border border-violet-200 bg-violet-50 hover:bg-violet-100 p-5 text-left transition"><i class="ph ph-student text-2xl text-violet-700"></i><span class="block mt-2 font-bold text-slate-800">Latihan</span><span class="block mt-1 text-xs text-slate-500">Rekod latihan HMI bulanan</span></button>
                 <button type="button" id="chooseOrientasiCategory" onclick="chooseAddRecordCategory('ORIENTASI')" class="rounded-2xl border border-teal-200 bg-teal-50 hover:bg-teal-100 p-5 text-left transition">
                     <i class="ph ph-book-open-text text-2xl text-teal-700"></i><span class="block mt-2 font-bold text-slate-800">Orientasi</span><span class="block mt-1 text-xs text-slate-500">Pesakit Islam menerima orientasi</span>
                 </button>
@@ -253,6 +254,25 @@
             </form>
         </div>
     </div>
+<div id="latihanEntryModal" class="modal-backdrop hidden" onclick="closeLatihanModal(event)">
+  <div class="modal-card" style="max-height:92vh;overflow-y:auto" onclick="event.stopPropagation()">
+    <div class="flex items-start justify-between gap-4 pb-4 border-b border-slate-100"><div><p class="section-label">PENGURUSAN DATA HMI</p><h3 class="dashboard-heading text-xl font-bold text-slate-900 mt-1">Tambah Rekod Latihan</h3><p class="text-sm text-slate-500 mt-1">Kemasukan data latihan HMI mengikut bulan dan wad</p></div><button type="button" onclick="closeLatihanModal()" class="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center"><i class="ph ph-x"></i></button></div>
+    <form id="latihanEntryForm" class="py-5 space-y-4" onsubmit="submitLatihanEntry(event)">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <label class="text-sm font-semibold text-slate-600">Tahun<input id="latihanYear" class="filter-control w-full mt-1" value="2026" readonly></label>
+        <label class="text-sm font-semibold text-slate-600">Bulan<select id="latihanMonth" class="filter-control w-full mt-1" required><option value="">Pilih bulan</option><option>Januari</option><option>Februari</option><option>Mac</option><option>April</option><option>Mei</option><option>Jun</option><option>Julai</option><option>Ogos</option><option>September</option><option>Oktober</option><option>November</option><option>Disember</option></select></label>
+        <label class="text-sm font-semibold text-slate-600 sm:col-span-2">Wad<select id="latihanWard" class="filter-control w-full mt-1" required><option value="">Pilih wad</option></select></label>
+        <label class="text-sm font-semibold text-slate-600">Staf Islam<input id="latihanStafIslam" type="number" min="0" step="1" class="filter-control w-full mt-1" placeholder="0" required></label>
+        <label class="text-sm font-semibold text-slate-600">Jururawat hadir<input id="latihanJururawat" type="number" min="0" step="1" class="filter-control w-full mt-1" placeholder="0" required></label>
+        <label class="text-sm font-semibold text-slate-600">PPK hadir<input id="latihanPPK" type="number" min="0" step="1" class="filter-control w-full mt-1" placeholder="0" required></label>
+        <div class="rounded-xl border border-violet-100 bg-violet-50 p-3"><span class="block text-xs font-semibold text-violet-700">Peratusan</span><strong id="latihanPercentagePreview" class="block text-xl text-violet-800 mt-1">0%</strong></div>
+      </div>
+      <p class="text-xs text-slate-500">Peratusan dikira: (Jururawat hadir + PPK hadir) ÷ Staf Islam × 100.</p>
+      <div id="latihanEntryMessage" class="hidden rounded-xl p-3 text-sm font-semibold" aria-live="polite"></div>
+      <div class="flex flex-col sm:flex-row justify-end gap-2"><button type="button" onclick="closeLatihanModal()" class="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-bold text-slate-600">Tutup</button><button id="saveLatihanButton" type="submit" class="rounded-xl px-5 py-2.5 text-sm font-bold text-white" style="background:#76539b">Simpan Rekod Latihan</button></div>
+    </form>
+  </div>
+</div>
     <div id="orientasiEntryModal" class="modal-backdrop hidden" onclick="closeOrientasiModal(event)">
         <div class="modal-card" style="max-height:92vh;overflow-y:auto" onclick="event.stopPropagation()">
             <div class="flex items-start justify-between gap-4 pb-4 border-b border-slate-100">
@@ -1343,10 +1363,12 @@
                 if (!sessionStorage.getItem('hmiAdminToken')) { alert('Sila log masuk sebagai Admin terlebih dahulu.'); return; }
                 const orientasiButton = document.getElementById('chooseOrientasiCategory');
                 const note = document.getElementById('addCategoryNote');
+                const latihanButton = document.getElementById('chooseLatihanCategory');
                 if (orientasiButton) orientasiButton.style.display = selectedYear === '2027' ? '' : 'none';
+                if (latihanButton) latihanButton.style.display = selectedYear === '2026' ? '' : 'none';
                 if (note) note.textContent = selectedYear === '2027'
                     ? 'Tahun 2027: kategori Kemudahan dan Orientasi tersedia.'
-                    : 'Kategori Orientasi hanya tersedia untuk Tahun 2027.';
+                    : (selectedYear === '2026' ? 'Tahun 2026: kategori Kemudahan dan Latihan tersedia.' : 'Kategori tambah rekod hanya tersedia untuk tahun yang disokong.');
                 const modal = document.getElementById('addCategoryModal');
                 modal.classList.remove('hidden'); modal.classList.add('flex');
             }
@@ -1359,6 +1381,10 @@
                 closeAddCategoryModal();
                 if (category === 'ORIENTASI') {
                     openOrientasiModal();
+                    return;
+                }
+                if (category === 'LATIHAN') {
+                    openLatihanModal();
                     return;
                 }
                 openKemudahanModal();
@@ -1402,6 +1428,69 @@
             window.closeAddCategoryModal = closeAddCategoryModal;
             window.chooseAddRecordCategory = chooseAddRecordCategory;
             window.closeAddRecordModal = closeAddRecordModal;
+            function updateLatihanPercentage() {
+                const staf = Number(document.getElementById('latihanStafIslam').value || 0);
+                const jururawat = Number(document.getElementById('latihanJururawat').value || 0);
+                const ppk = Number(document.getElementById('latihanPPK').value || 0);
+                const percentage = staf > 0 ? ((jururawat + ppk) / staf) * 100 : 0;
+                document.getElementById('latihanPercentagePreview').textContent = percentage.toFixed(0) + '%';
+            }
+            function openLatihanModal() {
+                if (!sessionStorage.getItem('hmiAdminToken')) { alert('Sila log masuk sebagai Admin terlebih dahulu.'); return; }
+                if (selectedYear !== '2026') { alert('Tambah rekod Latihan hanya diaktifkan untuk Tahun 2026.'); return; }
+                const source = document.getElementById('wardFilter');
+                const target = document.getElementById('latihanWard');
+                target.innerHTML = source ? source.innerHTML : '<option value="">Pilih wad</option>';
+                target.value = '';
+                document.getElementById('latihanEntryForm').reset();
+                document.getElementById('latihanYear').value = '2026';
+                document.getElementById('latihanPercentagePreview').textContent = '0%';
+                const msg = document.getElementById('latihanEntryMessage');
+                msg.textContent = ''; msg.className = 'hidden rounded-xl p-3 text-sm font-semibold';
+                const btn = document.getElementById('saveLatihanButton');
+                btn.disabled = false; btn.textContent = 'Simpan Rekod Latihan';
+                const modal = document.getElementById('latihanEntryModal');
+                modal.classList.remove('hidden'); modal.classList.add('flex');
+            }
+            function closeLatihanModal(event) {
+                if (event && event.target !== document.getElementById('latihanEntryModal')) return;
+                const modal = document.getElementById('latihanEntryModal');
+                modal.classList.add('hidden'); modal.classList.remove('flex');
+            }
+            function submitLatihanEntry(event) {
+                event.preventDefault();
+                const btn = document.getElementById('saveLatihanButton');
+                if (btn.disabled) return;
+                const msg = document.getElementById('latihanEntryMessage');
+                const token = sessionStorage.getItem('hmiAdminToken');
+                const ward = document.getElementById('latihanWard').value;
+                const month = document.getElementById('latihanMonth').selectedIndex - 1;
+                const staf = Number(document.getElementById('latihanStafIslam').value);
+                const jururawat = Number(document.getElementById('latihanJururawat').value);
+                const ppk = Number(document.getElementById('latihanPPK').value);
+                const showError = t => { msg.textContent=t; msg.className='rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm font-semibold text-rose-700'; };
+                if (!token) return showError('Sesi Admin tiada atau tamat. Sila log masuk semula.');
+                if (!ward) return showError('Sila pilih wad.');
+                if (month < 0 || month > 11) return showError('Sila pilih bulan.');
+                if (![staf,jururawat,ppk].every(v => Number.isInteger(v) && v >= 0)) return showError('Semua jumlah mesti nombor bulat sifar atau lebih.');
+                if (staf === 0 && (jururawat > 0 || ppk > 0)) return showError('Staf Islam mesti melebihi sifar jika terdapat kehadiran latihan.');
+                const form = document.getElementById('hmiLatihanPostForm');
+                form.action = window.HMI_API_URL;
+                document.getElementById('hmiLatihanToken').value = token;
+                document.getElementById('hmiLatihanWard').value = ward;
+                document.getElementById('hmiLatihanMonth').value = String(month);
+                document.getElementById('hmiLatihanStafIslam').value = String(staf);
+                document.getElementById('hmiLatihanJururawat').value = String(jururawat);
+                document.getElementById('hmiLatihanPPK').value = String(ppk);
+                btn.disabled = true; btn.textContent = 'Menyimpan...';
+                msg.textContent = 'Sedang menyimpan rekod ke Google Sheets...';
+                msg.className = 'rounded-xl border border-violet-200 bg-violet-50 p-3 text-sm font-semibold text-violet-700';
+                form.submit();
+            }
+            window.openLatihanModal = openLatihanModal;
+            window.closeLatihanModal = closeLatihanModal;
+            window.submitLatihanEntry = submitLatihanEntry;
+
             function openOrientasiModal() {
                 if (!sessionStorage.getItem('hmiAdminToken')) { alert('Sila log masuk sebagai Admin terlebih dahulu.'); return; }
                 if (selectedYear !== '2027') { alert('Tambah rekod Orientasi hanya diaktifkan untuk Tahun 2027.'); return; }
@@ -1542,6 +1631,20 @@
                         if (selectedYear === '2027' && selectedWardId === document.getElementById('entryWard').value) {
                             loadSelectedData();
                         }
+                    }
+                    return;
+                }
+                if (data.type === 'HMI_SAVE_LATIHAN') {
+                    const btn = document.getElementById('saveLatihanButton');
+                    btn.disabled = false; btn.textContent = 'Simpan Rekod Latihan';
+                    const msg = document.getElementById('latihanEntryMessage');
+                    msg.textContent = data.result.message || (data.result.success ? 'Rekod latihan berjaya disimpan.' : 'Rekod gagal disimpan.');
+                    msg.className = 'rounded-xl border p-3 text-sm font-semibold ' + (data.result.success ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-rose-200 bg-rose-50 text-rose-700');
+                    if (data.result.success) {
+                        const ward = document.getElementById('latihanWard').value;
+                        delete wardCategoryCache[ward + '::LATIHAN'];
+                        delete allWardChartCache['LATIHAN'];
+                        if (selectedYear === '2026' && selectedWardId === ward && selectedTab === 'LATIHAN') loadSelectedData();
                     }
                     return;
                 }
@@ -1698,6 +1801,9 @@ nav .rounded-xl, nav .rounded-full {
         <input type="hidden" name="statuses" id="hmiSaveStatuses">
         <input type="hidden" name="officer" id="hmiSaveOfficer">
         <input type="hidden" name="preparedBy" id="hmiSavePreparedBy">
+    </form>
+    <form id="hmiLatihanPostForm" method="post" target="hmiSaveFrame" class="hidden">
+        <input type="hidden" name="action" value="saveLatihan2026"><input type="hidden" name="token" id="hmiLatihanToken"><input type="hidden" name="id" id="hmiLatihanWard"><input type="hidden" name="monthIndex" id="hmiLatihanMonth"><input type="hidden" name="stafIslam" id="hmiLatihanStafIslam"><input type="hidden" name="jururawat" id="hmiLatihanJururawat"><input type="hidden" name="ppk" id="hmiLatihanPPK">
     </form>
     <form id="hmiOrientasiPostForm" method="post" target="hmiSaveFrame" class="hidden">
         <input type="hidden" name="action" value="saveOrientasi2027">
