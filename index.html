@@ -1677,8 +1677,8 @@
                 if (![appointed, muslim].every(value => Number.isInteger(value) && value >= 0)) {
                     return showError('Kedua-dua jumlah mesti nombor bulat sifar atau lebih.');
                 }
-                if (appointed > muslim) return showError('Bilangan staf yang dilantik tidak boleh melebihi jumlah staf beragama Islam.');
-                if (muslim === 0 && appointed > 0) return showError('Jumlah staf beragama Islam mesti melebihi sifar jika ada staf dilantik.');
+                // Bilangan staf dilantik dan jumlah staf Islam ialah dua nilai berasingan.
+                // Contoh: 2 staf bukan Islam dilantik, 0 staf Islam = input yang sah.
 
                 const form = document.getElementById('hmiPrivilegingPostForm');
                 form.action = window.HMI_API_URL;
