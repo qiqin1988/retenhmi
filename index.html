@@ -262,6 +262,7 @@
         <label class="text-sm font-semibold text-slate-600">Tahun<input id="latihanYear" class="filter-control w-full mt-1" value="2027" readonly></label>
         <label class="text-sm font-semibold text-slate-600">Bulan<select id="latihanMonth" class="filter-control w-full mt-1" required><option value="">Pilih bulan</option><option>Januari</option><option>Februari</option><option>Mac</option><option>April</option><option>Mei</option><option>Jun</option><option>Julai</option><option>Ogos</option><option>September</option><option>Oktober</option><option>November</option><option>Disember</option></select></label>
         <label class="text-sm font-semibold text-slate-600 sm:col-span-2">Wad<select id="latihanWard" class="filter-control w-full mt-1" required><option value="">Pilih wad</option></select></label>
+         <label class="text-sm font-semibold text-slate-600 sm:col-span-2">Pegawai Tanggungjawab<input id="latihanOfficer" type="text" maxlength="120" class="filter-control w-full mt-1" placeholder="Masukkan nama pegawai yang bertanggungjawab" required></label>
         <label class="text-sm font-semibold text-slate-600">Staf Islam<input id="latihanStafIslam" type="number" min="0" step="1" class="filter-control w-full mt-1" placeholder="0" required oninput="updateLatihanPercentage()"></label>
         <label class="text-sm font-semibold text-slate-600">Jururawat hadir<input id="latihanJururawat" type="number" min="0" step="1" class="filter-control w-full mt-1" placeholder="0" required oninput="updateLatihanPercentage()"></label>
         <label class="text-sm font-semibold text-slate-600">PPK hadir<input id="latihanPPK" type="number" min="0" step="1" class="filter-control w-full mt-1" placeholder="0" required oninput="updateLatihanPercentage()"></label>
@@ -1291,6 +1292,7 @@
             }
 
             let saveResponseTimer = null;
+            let latihanSaveResponseTimer = null;
             function submitKemudahanEntry(event) {
                 event.preventDefault();
                 if (document.getElementById('saveKemudahanButton').disabled) return;
@@ -1483,9 +1485,11 @@
                 const staf = Number(document.getElementById('latihanStafIslam').value);
                 const jururawat = Number(document.getElementById('latihanJururawat').value);
                 const ppk = Number(document.getElementById('latihanPPK').value);
+                const officer = document.getElementById('latihanOfficer').value.trim();
                 const showError = t => { msg.textContent=t; msg.className='rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm font-semibold text-rose-700'; };
                 if (!token) return showError('Sesi Admin tiada atau tamat. Sila log masuk semula.');
                 if (!ward) return showError('Sila pilih wad.');
+                if (!officer) return showError('Sila isi nama Pegawai Tanggungjawab.');
                 if (month < 0 || month > 11) return showError('Sila pilih bulan.');
                 if (![staf,jururawat,ppk].every(v => Number.isInteger(v) && v >= 0)) return showError('Semua jumlah mesti nombor bulat sifar atau lebih.');
                 if (staf === 0 && (jururawat > 0 || ppk > 0)) return showError('Staf Islam mesti melebihi sifar jika terdapat kehadiran latihan.');
@@ -1497,10 +1501,19 @@
                 document.getElementById('hmiLatihanStafIslam').value = String(staf);
                 document.getElementById('hmiLatihanJururawat').value = String(jururawat);
                 document.getElementById('hmiLatihanPPK').value = String(ppk);
+                document.getElementById('hmiLatihanOfficer').value = officer;
                 btn.disabled = true; btn.textContent = 'Menyimpan...';
                 msg.textContent = 'Sedang menyimpan rekod ke Google Sheets...';
                 msg.className = 'rounded-xl border border-violet-200 bg-violet-50 p-3 text-sm font-semibold text-violet-700';
                 form.submit();
+                if (latihanSaveResponseTimer) clearTimeout(latihanSaveResponseTimer);
+                latihanSaveResponseTimer = setTimeout(() => {
+                    btn.disabled = false;
+                    btn.textContent = 'Simpan Rekod Latihan';
+                    msg.textContent = 'Tiada pengesahan diterima daripada Apps Script selepas 20 saat. Semak deployment Web App dan Execution log sebelum cuba simpan semula.';
+                    msg.className = 'rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm font-semibold text-rose-700';
+                    latihanSaveResponseTimer = null;
+                }, 20000);
             }
             window.openLatihanModal = openLatihanModal;
             window.updateLatihanPercentage = updateLatihanPercentage;
@@ -1651,6 +1664,7 @@
                     return;
                 }
                 if (data.type === 'HMI_SAVE_LATIHAN') {
+                    if (latihanSaveResponseTimer) { clearTimeout(latihanSaveResponseTimer); latihanSaveResponseTimer = null; }
                     const btn = document.getElementById('saveLatihanButton');
                     btn.disabled = false; btn.textContent = 'Simpan Rekod Latihan';
                     const msg = document.getElementById('latihanEntryMessage');
@@ -1819,7 +1833,7 @@ nav .rounded-xl, nav .rounded-full {
         <input type="hidden" name="preparedBy" id="hmiSavePreparedBy">
     </form>
     <form id="hmiLatihanPostForm" method="post" target="hmiSaveFrame" class="hidden">
-        <input type="hidden" name="action" value="saveLatihan2027"><input type="hidden" name="token" id="hmiLatihanToken"><input type="hidden" name="id" id="hmiLatihanWard"><input type="hidden" name="monthIndex" id="hmiLatihanMonth"><input type="hidden" name="stafIslam" id="hmiLatihanStafIslam"><input type="hidden" name="jururawat" id="hmiLatihanJururawat"><input type="hidden" name="ppk" id="hmiLatihanPPK">
+        <input type="hidden" name="action" value="saveLatihan2027"><input type="hidden" name="token" id="hmiLatihanToken"><input type="hidden" name="id" id="hmiLatihanWard"><input type="hidden" name="monthIndex" id="hmiLatihanMonth"><input type="hidden" name="stafIslam" id="hmiLatihanStafIslam"><input type="hidden" name="jururawat" id="hmiLatihanJururawat"><input type="hidden" name="ppk" id="hmiLatihanPPK"><input type="hidden" name="officer" id="hmiLatihanOfficer">
     </form>
     <form id="hmiOrientasiPostForm" method="post" target="hmiSaveFrame" class="hidden">
         <input type="hidden" name="action" value="saveOrientasi2027">
