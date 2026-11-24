@@ -429,7 +429,9 @@
                     const meta = getMeta(name);
                     const btn = document.createElement('button');
                     btn.className = 'category-btn' + (name === selectedTab ? ' active' : '');
-                    btn.innerHTML = '<i class="ph ' + meta.icon + ' text-lg"></i><span>' + escapeHTML(meta.label) + '</span>';
+                    const pending2027 = selectedYear === '2027' && ['PRIVILEGING','ADVERSE EVENT','DATA KEHADIRAN KURSUS'].includes(name);
+                    btn.innerHTML = '<i class="ph ' + meta.icon + ' text-lg"></i><span>' + escapeHTML(meta.label) + (pending2027 ? '<small class="block text-[9px] opacity-70 font-semibold">BELUM DIAKTIFKAN</small>' : '') + '</span>';
+                    btn.title = pending2027 ? 'Spreadsheet kategori ini belum dikonfigurasikan untuk 2027' : meta.desc;
                     btn.onclick = () => selectTab(name);
                     nav.appendChild(btn);
                 });
@@ -453,6 +455,19 @@
                 document.getElementById('statusFilter').value = 'all';
                 document.getElementById('monthFilter').value = 'all';
                 buildCategoryNav();
+                if (selectedYear === '2027' && ['PRIVILEGING','ADVERSE EVENT','DATA KEHADIRAN KURSUS'].includes(name)) {
+                    const view = document.getElementById('dataView');
+                    totalWards = 0;
+                    document.getElementById('wardFilter').innerHTML = '<option value="">Belum tersedia</option>';
+                    document.getElementById('kpiRows').textContent = '—';
+                    document.getElementById('dataSubtitle').textContent = getMeta(name).label + ' • Tahun 2027';
+                    document.getElementById('tableSummary').textContent = 'Kategori belum diaktifkan';
+                    document.getElementById('allPieSubtitle').textContent = 'Kategori belum diaktifkan';
+                    document.getElementById('allBarSubtitle').textContent = 'Kategori belum diaktifkan';
+                    window.currentModel = null;
+                    view.innerHTML = '<div class="min-h-[300px] flex items-center justify-center p-6"><div class="text-center max-w-lg"><div class="w-14 h-14 mx-auto rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center"><i class="ph ph-hourglass-medium text-2xl"></i></div><h3 class="font-bold text-slate-800 mt-3">' + escapeHTML(getMeta(name).label) + ' 2027</h3><p class="text-sm text-slate-500 mt-2">Kategori ini telah disediakan pada dashboard. Spreadsheet dan sambungan data akan diaktifkan selepas struktur RETEN 2027 disediakan.</p></div></div>';
+                    return;
+                }
                 if (selectedYear === '2027') {
                     const view = document.getElementById('dataView');
                     view.innerHTML = '<div class="min-h-[300px] flex items-center justify-center text-slate-400"><div class="text-center"><i class="ph ph-spinner-gap animate-spin text-4xl text-blue-500"></i><p class="mt-3 font-medium">Memuatkan senarai wad ' + escapeHTML(getMeta(name).label) + ' 2027...</p></div></div>';
@@ -1190,7 +1205,7 @@
                             const requestedCategory = selectedTab || 'KEMUDAHAN';
                             result = await callAPI({action:'list2027', category:requestedCategory});
                             if (!result || !result.success || !Array.isArray(result.wards)) throw new Error((result && result.message) || 'Senarai wad 2027 tidak dapat dibaca.');
-                            allCategories = Array.isArray(result.categories) ? result.categories : ['KEMUDAHAN','ORIENTASI'];
+                            allCategories = ['KEMUDAHAN','ORIENTASI','LATIHAN','PRIVILEGING','ADVERSE EVENT','DATA KEHADIRAN KURSUS'];
                         } else {
                             allCategories = ['KEMUDAHAN','ORIENTASI','LATIHAN','PRIVILEGING','ADVERSE EVENT','DATA KEHADIRAN KURSUS'];
                             result = await callAPI({action:'list' + selectedYear});
