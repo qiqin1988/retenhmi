@@ -184,6 +184,24 @@
         </footer>
     </main>
 
+    <div id="addCategoryModal" class="modal-backdrop hidden" onclick="closeAddCategoryModal(event)">
+        <div class="modal-card max-w-lg" onclick="event.stopPropagation()">
+            <div class="flex items-start justify-between gap-4 pb-4 border-b border-slate-100">
+                <div><p class="section-label">PENGURUSAN DATA HMI</p><h3 class="dashboard-heading text-xl font-bold text-slate-900 mt-1">Tambah Rekod Baharu</h3><p class="text-sm text-slate-500 mt-1">Pilih kategori rekod yang ingin ditambah.</p></div>
+                <button type="button" onclick="closeAddCategoryModal()" class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600"><i class="ph ph-x"></i></button>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-5">
+                <button type="button" onclick="chooseAddRecordCategory('KEMUDAHAN')" class="rounded-2xl border border-violet-200 bg-violet-50 hover:bg-violet-100 p-5 text-left transition">
+                    <i class="ph ph-house-line text-2xl text-violet-700"></i><span class="block mt-2 font-bold text-slate-800">Kemudahan</span><span class="block mt-1 text-xs text-slate-500">Status kemudahan dan peralatan</span>
+                </button>
+                <button type="button" id="chooseOrientasiCategory" onclick="chooseAddRecordCategory('ORIENTASI')" class="rounded-2xl border border-teal-200 bg-teal-50 hover:bg-teal-100 p-5 text-left transition">
+                    <i class="ph ph-book-open-text text-2xl text-teal-700"></i><span class="block mt-2 font-bold text-slate-800">Orientasi</span><span class="block mt-1 text-xs text-slate-500">Pesakit Islam menerima orientasi</span>
+                </button>
+            </div>
+            <p id="addCategoryNote" class="text-xs text-slate-500 mt-4"></p>
+        </div>
+    </div>
+
     <div id="addRecordModal" class="modal-backdrop hidden" onclick="closeAddRecordModal(event)">
         <div class="modal-card" style="max-height:92vh;overflow-y:auto" onclick="event.stopPropagation()">
             <div class="flex items-start justify-between gap-4 pb-4 border-b border-slate-100">
@@ -1310,26 +1328,38 @@
             window.submitKemudahanEntry = submitKemudahanEntry;
             window.updateKemudahanPreview = updateKemudahanPreview;
             function openAddRecordModal() {
-                if (String(selectedTab || '').toUpperCase().includes('ORIENTASI')) {
+                if (!sessionStorage.getItem('hmiAdminToken')) { alert('Sila log masuk sebagai Admin terlebih dahulu.'); return; }
+                const orientasiButton = document.getElementById('chooseOrientasiCategory');
+                const note = document.getElementById('addCategoryNote');
+                if (orientasiButton) orientasiButton.style.display = selectedYear === '2027' ? '' : 'none';
+                if (note) note.textContent = selectedYear === '2027'
+                    ? 'Tahun 2027: kategori Kemudahan dan Orientasi tersedia.'
+                    : 'Kategori Orientasi hanya tersedia untuk Tahun 2027.';
+                const modal = document.getElementById('addCategoryModal');
+                modal.classList.remove('hidden'); modal.classList.add('flex');
+            }
+            function closeAddCategoryModal(event) {
+                if (event && event.target !== document.getElementById('addCategoryModal')) return;
+                const modal = document.getElementById('addCategoryModal');
+                modal.classList.add('hidden'); modal.classList.remove('flex');
+            }
+            function chooseAddRecordCategory(category) {
+                closeAddCategoryModal();
+                if (category === 'ORIENTASI') {
                     openOrientasiModal();
                     return;
                 }
-                if (!sessionStorage.getItem('hmiAdminToken')) { alert('Sila log masuk sebagai Admin terlebih dahulu.'); return; }
-                const activeCategory = (document.querySelector('.category-btn.active span') || {}).textContent || 'Kemudahan';
-                if (!/kemudahan/i.test(activeCategory)) { alert('Borang tambah rekod ini buat masa ini disediakan untuk kategori Kemudahan sahaja.'); return; }
+                openKemudahanModal();
+            }
+            function openKemudahanModal() {
                 buildKemudahanEntryItems();
-
-                // Setiap kali borang dibuka, mulakan rekod baharu dengan medan kosong.
                 const form = document.getElementById('kemudahanEntryForm');
                 form.reset();
                 document.querySelectorAll('#kemudahanStatusList input[type="radio"]').forEach(input => { input.checked = false; });
-
-                const year = document.getElementById('yearFilter').value || '2026';
+                const year = document.getElementById('yearFilter').value || selectedYear || '2027';
                 document.getElementById('entryYear').value = year;
                 const wardSelect = document.getElementById('wardFilter');
                 const entryWard = document.getElementById('entryWard');
-
-                // Tahun 2027 menggunakan senarai 34 tab wad dalam RETEN HMI 2027.
                 if (year === '2027') {
                     entryWard.innerHTML = '<option value="">Pilih wad</option>' +
                         HMI_2027_WARDS.map(nama => '<option value="' + escapeHTML(nama) + '">' + escapeHTML(nama) + '</option>').join('');
@@ -1338,19 +1368,16 @@
                     entryWard.innerHTML = wardSelect ? wardSelect.innerHTML : '<option value="">Pilih wad</option>';
                     entryWard.value = '';
                 }
-
                 document.getElementById('entryMonth').selectedIndex = 0;
                 document.getElementById('entryOfficer').value = '';
                 document.getElementById('entryPreparedBy').value = '';
                 document.getElementById('kemudahanCountPreview').textContent = '0 / 10';
-
                 const msg = document.getElementById('kemudahanEntryPreview');
                 msg.textContent = '';
                 msg.classList.add('hidden');
                 const saveButton = document.getElementById('saveKemudahanButton');
                 saveButton.disabled = false;
                 saveButton.textContent = 'Simpan ke Sheet 2027';
-
                 const modal = document.getElementById('addRecordModal');
                 modal.classList.remove('hidden'); modal.classList.add('flex');
             }
@@ -1360,6 +1387,8 @@
                 modal.classList.add('hidden'); modal.classList.remove('flex');
             }
             window.openAddRecordModal = openAddRecordModal;
+            window.closeAddCategoryModal = closeAddCategoryModal;
+            window.chooseAddRecordCategory = chooseAddRecordCategory;
             window.closeAddRecordModal = closeAddRecordModal;
             function openOrientasiModal() {
                 if (!sessionStorage.getItem('hmiAdminToken')) { alert('Sila log masuk sebagai Admin terlebih dahulu.'); return; }
