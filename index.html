@@ -1225,6 +1225,18 @@
                 "WAD REHAB", "WAD CICU", "WAD RADIOIDIN", "WAD C11 HDA"
             ];
 
+            // Senarai wad khusus ORIENTASI 2027; mesti sepadan dengan tab dalam spreadsheet ORIENTASI.
+            const HMI_2027_ORIENTASI_WARDS = [
+                'BURN WAD', 'WAD A1', 'WAD A2(H)', 'WAD A2(N)', 'WAD A3RD (PLASTIC)',
+                'WAD A4TH', 'WAD C6', 'WAD C8', 'WAD C10', 'WAD C11 HDA',
+                'WAD C13 GYNAE', 'WAD C15', 'WAD C17 MEDICAL', 'WAD C18 ENT',
+                'WAD C20(ID)', 'WAD CICU', 'WAD GICU', 'WAD OBS ACC', 'WAD PALIATIF',
+                'WAD REHAB', 'WAD A2(HDA)', 'WAD A3RD', 'WAD A3RD(BMT)', 'WAD C5',
+                'WAD C7', 'WAD C9', 'WAD C12', 'WAD C14', 'WAD C16', 'WAD C17(EYE)',
+                'WAD C19', 'WAD CCU', 'WAD CRW', 'WAD NEURO ICU', 'WAD OBS BLOK D',
+                'WAD RADIOIDIN', 'WAD C11'
+            ];
+
             const KEMUDAHAN_ITEMS = ['Ruang solat','Tempat wuduk','Penanda arah kiblat','Buku/Pamflet panduan ibadah','Sejadah/telekung/kain pelikat','Kit solat','Botol spray/debu tayammum','Pamflet/flyers/buku ibadah','Alquran/Yaasin','Takwim solat'];
             function buildKemudahanEntryItems() {
                 const host = document.getElementById('kemudahanStatusList');
@@ -1393,9 +1405,9 @@
             function openOrientasiModal() {
                 if (!sessionStorage.getItem('hmiAdminToken')) { alert('Sila log masuk sebagai Admin terlebih dahulu.'); return; }
                 if (selectedYear !== '2027') { alert('Tambah rekod Orientasi hanya diaktifkan untuk Tahun 2027.'); return; }
-                const source = document.getElementById('wardFilter');
                 const target = document.getElementById('orientasiWard');
-                target.innerHTML = source ? source.innerHTML : '<option value="">Pilih wad</option>';
+                target.innerHTML = '<option value="">Pilih wad</option>' +
+                    HMI_2027_ORIENTASI_WARDS.map(nama => '<option value="' + escapeHTML(nama) + '">' + escapeHTML(nama) + '</option>').join('');
                 target.value = '';
                 document.getElementById('orientasiEntryForm').reset();
                 document.getElementById('orientasiYear').value = '2027';
