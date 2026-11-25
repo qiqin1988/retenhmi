@@ -935,7 +935,7 @@
                 };
                 for(let i=0;i<rows.length;i++){
                     const r=rows[i]||[];
-                    const label=String(r[1]??r[0]??'').trim().toUpperCase();
+                    const label=String(r[1]||r[0]||'').trim().toUpperCase();
                     if(monthPattern.test(label)){
                         const skin = toNumber(r[2]) ?? 0;
                         const fall = toNumber(r[6]) ?? 0;
