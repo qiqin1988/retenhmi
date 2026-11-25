@@ -942,7 +942,7 @@
                         // Jika formula jumlah keseluruhan dalam sheet kosong/ralat (NaN),
                         // kira semula daripada dua jenis insiden yang dipaparkan.
                         const recordedTotal = toNumber(r[10]);
-                        const incidents = recordedTotal === null ? skin + fall : recordedTotal;
+                        const incidents = recordedTotal === null ? 0 : recordedTotal;
                         data.push({
                             name:label,sub:'',values:[skin,fall,incidents],raw:r
                         });
