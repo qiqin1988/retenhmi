@@ -542,7 +542,7 @@
                     const meta = getMeta(name);
                     const btn = document.createElement('button');
                     btn.className = 'category-btn' + (name === selectedTab ? ' active' : '');
-                    const pending2027 = selectedYear === '2027' && ['ADVERSE EVENT','DATA KEHADIRAN KURSUS'].includes(name);
+                    const pending2027 = selectedYear === '2027' && ['DATA KEHADIRAN KURSUS'].includes(name);
                     btn.innerHTML = '<i class="ph ' + meta.icon + ' text-lg"></i><span>' + escapeHTML(meta.label) + (pending2027 ? '<small class="block text-[9px] opacity-70 font-semibold">BELUM DIAKTIFKAN</small>' : '') + '</span>';
                     btn.title = pending2027 ? 'Spreadsheet kategori ini belum dikonfigurasikan untuk 2027' : meta.desc;
                     btn.onclick = () => selectTab(name);
@@ -580,7 +580,7 @@
                 document.getElementById('statusFilter').value = 'all';
                 document.getElementById('monthFilter').value = 'all';
                 buildCategoryNav();
-                if (selectedYear === '2027' && ['ADVERSE EVENT','DATA KEHADIRAN KURSUS'].includes(name)) {
+                if (selectedYear === '2027' && ['DATA KEHADIRAN KURSUS'].includes(name)) {
                     const view = document.getElementById('dataView');
                     totalWards = 0;
                     document.getElementById('wardFilter').innerHTML = '<option value="">Belum tersedia</option>';
