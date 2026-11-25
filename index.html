@@ -249,12 +249,32 @@
                 <button type="button" id="chooseOrientasiCategory" onclick="chooseAddRecordCategory('ORIENTASI')" class="rounded-2xl border border-teal-200 bg-teal-50 hover:bg-teal-100 p-5 text-left transition">
                     <i class="ph ph-book-open-text text-2xl text-teal-700"></i><span class="block mt-2 font-bold text-slate-800">Orientasi</span><span class="block mt-1 text-xs text-slate-500">Pesakit Islam menerima orientasi</span>
                 </button>
+                <button type="button" id="chooseAdverseEventCategory" onclick="openAdverseEventModal()" class="rounded-2xl border border-rose-200 bg-rose-50 hover:bg-rose-100 p-5 text-left transition"><i class="ph ph-first-aid-kit text-2xl text-rose-700"></i><span class="block mt-2 font-bold text-slate-800">Adverse Event</span><span class="block mt-1 text-xs text-slate-500">Rekod insiden bulanan</span></button>
                 <button type="button" id="choosePrivilegingCategory" onclick="chooseAddRecordCategory('PRIVILEGING')" class="rounded-2xl border border-amber-200 bg-amber-50 hover:bg-amber-100 p-5 text-left transition">
                     <i class="ph ph-certificate text-2xl text-amber-700"></i><span class="block mt-2 font-bold text-slate-800">Privileging</span><span class="block mt-1 text-xs text-slate-500">Bilangan staf dilantik dan staf Islam</span>
                 </button>
             </div>
             <p id="addCategoryNote" class="text-xs text-slate-500 mt-4"></p>
         </div>
+    </div>
+
+    <div id="adverseEventEntryModal" class="modal-backdrop hidden" onclick="closeAdverseEventModal(event)">
+      <div class="modal-card" style="max-height:92vh;overflow-y:auto" onclick="event.stopPropagation()">
+        <div class="flex items-start justify-between gap-4 pb-4 border-b border-slate-100"><div><p class="section-label">PENGURUSAN DATA HMI</p><h3 class="dashboard-heading text-xl font-bold text-slate-900 mt-1">Tambah Rekod Adverse Event</h3><p class="text-sm text-slate-500 mt-1">Kemasukan bilangan insiden mengikut bulan dan wad</p></div><button type="button" onclick="closeAdverseEventModal()" class="w-9 h-9 rounded-xl bg-slate-100"><i class="ph ph-x"></i></button></div>
+        <form id="adverseEventEntryForm" class="py-5 space-y-4" onsubmit="submitAdverseEventEntry(event)">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <label class="text-sm font-semibold text-slate-600">Tahun<input type="text" value="2027" readonly class="filter-control w-full mt-1"></label>
+            <label class="text-sm font-semibold text-slate-600">Bulan<select id="adverseEventMonth" class="filter-control w-full mt-1" required><option value="">Pilih bulan</option><option>Januari</option><option>Februari</option><option>Mac</option><option>April</option><option>Mei</option><option>Jun</option><option>Julai</option><option>Ogos</option><option>September</option><option>Oktober</option><option>November</option><option>Disember</option></select></label>
+            <label class="text-sm font-semibold text-slate-600 sm:col-span-2">Wad<select id="adverseEventWard" class="filter-control w-full mt-1" required><option value="">Pilih wad</option></select></label>
+          </div>
+          <label class="block text-sm font-semibold text-slate-700">Bilangan pesakit mendapat reaksi kulit akibat penggunaan debu tayammum<input id="adverseEventSkin" type="number" min="0" step="1" value="0" required class="filter-control w-full mt-1"></label>
+          <label class="block text-sm font-semibold text-slate-700">Bilangan pesakit jatuh semasa pelaksanaan pengurusan ibadah pesakit<input id="adverseEventFall" type="number" min="0" step="1" value="0" required class="filter-control w-full mt-1"></label>
+          <label class="block text-sm font-semibold text-slate-700">Jumlah keseluruhan insiden pesakit jatuh di wad<input id="adverseEventTotal" type="number" min="0" step="1" value="0" required class="filter-control w-full mt-1"></label>
+          <p class="text-xs text-slate-500">Ketiga-tiga jumlah direkod secara berasingan; jumlah keseluruhan tidak dikira secara automatik.</p>
+          <p id="adverseEventEntryMessage" class="hidden rounded-xl p-3 text-sm font-semibold" role="status"></p>
+          <div class="flex justify-end gap-2"><button type="button" onclick="closeAdverseEventModal()" class="rounded-xl border px-4 py-2.5 text-sm">Batal</button><button id="saveAdverseEventButton" type="submit" class="rounded-xl bg-rose-600 text-white px-5 py-2.5 text-sm font-semibold">Simpan Rekod Adverse Event</button></div>
+        </form>
+      </div>
     </div>
 
     <div id="addRecordModal" class="modal-backdrop hidden" onclick="closeAddRecordModal(event)">
@@ -1494,9 +1514,11 @@
                 if (orientasiButton) orientasiButton.style.display = selectedYear === '2027' ? '' : 'none';
                 if (latihanButton) latihanButton.style.display = selectedYear === '2027' ? '' : 'none';
                 const privilegingButton = document.getElementById('choosePrivilegingCategory');
+                const adverseButton = document.getElementById('chooseAdverseEventCategory');
+                if (adverseButton) adverseButton.style.display = selectedYear === '2027' ? '' : 'none';
                 if (privilegingButton) privilegingButton.style.display = selectedYear === '2027' ? '' : 'none';
                 if (note) note.textContent = selectedYear === '2027'
-                    ? 'Tahun 2027: kategori Kemudahan, Orientasi, Latihan dan Privileging tersedia.'
+                    ? 'Tahun 2027: kategori Kemudahan, Orientasi, Latihan, Privileging dan Adverse Event tersedia.'
                     : 'Kategori tambah rekod hanya tersedia untuk tahun 2027.';
                 const modal = document.getElementById('addCategoryModal');
                 modal.classList.remove('hidden'); modal.classList.add('flex');
@@ -1520,8 +1542,45 @@
                     openPrivilegingModal();
                     return;
                 }
+                if (category === 'ADVERSE EVENT') { openAdverseEventModal(); return; }
                 openKemudahanModal();
             }
+            let adverseEventSaveResponseTimer = null;
+            function openAdverseEventModal() {
+              if (!sessionStorage.getItem('hmiAdminToken')) { alert('Sila log masuk sebagai Admin terlebih dahulu.'); return; }
+              closeAddCategoryModal();
+              const ward=document.getElementById('adverseEventWard');
+              ward.innerHTML='<option value="">Pilih wad</option>'+HMI_2027_WARDS.map(n=>'<option value="'+escapeHTML(n)+'">'+escapeHTML(n)+'</option>').join('');
+              document.getElementById('adverseEventEntryForm').reset();
+              ['adverseEventSkin','adverseEventFall','adverseEventTotal'].forEach(id=>document.getElementById(id).value='0');
+              const msg=document.getElementById('adverseEventEntryMessage'); msg.textContent=''; msg.className='hidden rounded-xl p-3 text-sm font-semibold';
+              const btn=document.getElementById('saveAdverseEventButton'); btn.disabled=false; btn.textContent='Simpan Rekod Adverse Event';
+              const modal=document.getElementById('adverseEventEntryModal'); modal.classList.remove('hidden'); modal.classList.add('flex');
+            }
+            function closeAdverseEventModal(event) {
+              if(event && event.target!==document.getElementById('adverseEventEntryModal')) return;
+              const modal=document.getElementById('adverseEventEntryModal'); modal.classList.add('hidden'); modal.classList.remove('flex');
+            }
+            function submitAdverseEventEntry(event) {
+              event.preventDefault();
+              const btn=document.getElementById('saveAdverseEventButton'); if(btn.disabled)return;
+              const token=sessionStorage.getItem('hmiAdminToken'), ward=document.getElementById('adverseEventWard').value, month=document.getElementById('adverseEventMonth').selectedIndex-1;
+              const skin=Number(document.getElementById('adverseEventSkin').value), fall=Number(document.getElementById('adverseEventFall').value), total=Number(document.getElementById('adverseEventTotal').value);
+              const msg=document.getElementById('adverseEventEntryMessage');
+              const fail=t=>{msg.textContent=t;msg.className='rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm font-semibold text-rose-700';};
+              if(!token)return fail('Sesi Admin tiada atau tamat. Sila log masuk semula.');
+              if(!ward||!HMI_2027_WARDS.includes(ward))return fail('Sila pilih wad yang sah.');
+              if(month<0||month>11)return fail('Sila pilih bulan.');
+              if(![skin,fall,total].every(v=>Number.isInteger(v)&&v>=0))return fail('Semua jumlah mesti nombor bulat sifar atau lebih.');
+              const form=document.getElementById('hmiAdverseEventPostForm'); form.action=window.HMI_API_URL;
+              document.getElementById('hmiAdverseEventToken').value=token; document.getElementById('hmiAdverseEventWardPost').value=ward; document.getElementById('hmiAdverseEventMonthPost').value=String(month);
+              document.getElementById('hmiAdverseEventSkinPost').value=String(skin); document.getElementById('hmiAdverseEventFallPost').value=String(fall); document.getElementById('hmiAdverseEventTotalPost').value=String(total);
+              btn.disabled=true;btn.textContent='Menyimpan...';msg.textContent='Sedang menyimpan rekod ke Google Sheets ADVERSE EVENT 2027...';msg.className='rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm font-semibold text-rose-700';form.submit();
+              if(adverseEventSaveResponseTimer)clearTimeout(adverseEventSaveResponseTimer);
+              adverseEventSaveResponseTimer=setTimeout(()=>{btn.disabled=false;btn.textContent='Simpan Rekod Adverse Event';fail('Belum menerima pengesahan daripada Google Sheets. Semak tab wad sebelum cuba simpan semula.');},20000);
+            }
+            window.openAdverseEventModal=openAdverseEventModal; window.closeAdverseEventModal=closeAdverseEventModal; window.submitAdverseEventEntry=submitAdverseEventEntry;
+
             function openKemudahanModal() {
                 buildKemudahanEntryItems();
                 const form = document.getElementById('kemudahanEntryForm');
@@ -1919,6 +1978,14 @@
                     }
                     return;
                 }
+                if (data.type === 'HMI_SAVE_ADVERSE_EVENT') {
+                    if(adverseEventSaveResponseTimer){clearTimeout(adverseEventSaveResponseTimer);adverseEventSaveResponseTimer=null;}
+                    const btn=document.getElementById('saveAdverseEventButton');btn.disabled=false;btn.textContent='Simpan Rekod Adverse Event';
+                    const msg=document.getElementById('adverseEventEntryMessage');msg.textContent=data.result.message||(data.result.success?'Rekod Adverse Event berjaya disimpan.':'Rekod gagal disimpan.');
+                    msg.className='rounded-xl border p-3 text-sm font-semibold '+(data.result.success?'border-emerald-200 bg-emerald-50 text-emerald-700':'border-rose-200 bg-rose-50 text-rose-700');
+                    if(data.result.success){const ward=document.getElementById('adverseEventWard').value;delete wardCategoryCache[ward+'::ADVERSE EVENT'];delete allWardChartCache['ADVERSE EVENT'];if(selectedYear==='2027'&&selectedWardId===ward&&selectedTab==='ADVERSE EVENT')loadSelectedData();}
+                    return;
+                }
                 if (data.type !== 'HMI_ADMIN_LOGIN') return;
                 adminLoginPending = false;
                 const button = document.getElementById('adminLoginSubmit');
@@ -2079,6 +2146,7 @@ nav .rounded-xl, nav .rounded-full {
         <input type="hidden" name="stafIslam" id="hmiPrivilegingMuslim">
         <input type="hidden" name="officer" id="hmiPrivilegingOfficer">
     </form>
+    <form id="hmiAdverseEventPostForm" method="post" target="hmiSaveFrame" class="hidden"><input type="hidden" name="action" value="saveAdverseEvent2027"><input type="hidden" name="token" id="hmiAdverseEventToken"><input type="hidden" name="id" id="hmiAdverseEventWardPost"><input type="hidden" name="monthIndex" id="hmiAdverseEventMonthPost"><input type="hidden" name="skin" id="hmiAdverseEventSkinPost"><input type="hidden" name="fall" id="hmiAdverseEventFallPost"><input type="hidden" name="total" id="hmiAdverseEventTotalPost"></form>
     <form id="hmiAdminPostForm" method="post" target="hmiAdminLoginFrame" class="hidden">
         <input type="hidden" name="action" value="adminLogin">
         <input type="hidden" name="password" id="hmiAdminPostPassword">
