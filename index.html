@@ -554,8 +554,8 @@
             window.changeYear = changeYear;
 
             async function selectTab(name) {
+                const previousWardId = selectedWardId;
                 selectedTab = name;
-                selectedWardId = '';
                 document.getElementById('searchInput').value = '';
                 document.getElementById('statusFilter').value = 'all';
                 document.getElementById('monthFilter').value = 'all';
@@ -584,13 +584,19 @@
                         const wardFilter = document.getElementById('wardFilter');
                         wardFilter.innerHTML = '<option value="">Pilih Wad (' + totalWards + ' tersedia)</option>' +
                             wards.map(w => '<option value="' + escapeHTML(w.id) + '">' + escapeHTML(w.name) + '</option>').join('');
+                        selectedWardId = wards.some(w => String(w.id) === String(previousWardId)) ? previousWardId : '';
+                        wardFilter.value = selectedWardId;
                         document.getElementById('kpiRows').textContent = totalWards;
                         document.getElementById('dataSubtitle').textContent = totalWards + ' wad tersedia • ' + getMeta(name).label + ' 2027';
                         document.getElementById('tableSummary').textContent = totalWards + ' wad tersedia • Tahun 2027';
                         delete allWardChartCache[name];
                         delete wardCategoryCache[name];
-                        view.innerHTML = '<div class="min-h-[300px] flex items-center justify-center text-center text-slate-400"><div><i class="ph ph-hand-point-up text-4xl"></i><p class="mt-2 font-semibold">Pilih wad untuk bermula</p><p class="text-xs mt-1">Senarai ' + escapeHTML(getMeta(name).label) + ' 2027 telah dimuatkan.</p></div></div>';
-                        window.currentModel = null;
+                        if (selectedWardId) {
+                            await loadSelectedData();
+                        } else {
+                            view.innerHTML = '<div class="min-h-[300px] flex items-center justify-center text-center text-slate-400"><div><i class="ph ph-hand-point-up text-4xl"></i><p class="mt-2 font-semibold">Pilih wad untuk bermula</p><p class="text-xs mt-1">Senarai ' + escapeHTML(getMeta(name).label) + ' 2027 telah dimuatkan.</p></div></div>';
+                            window.currentModel = null;
+                        }
                     } catch (error) {
                         view.innerHTML = '<div class="p-6 text-center text-rose-600">' + escapeHTML(error.message) + '</div>';
                     }
