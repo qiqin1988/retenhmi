@@ -253,6 +253,7 @@
                 <button type="button" id="choosePrivilegingCategory" onclick="chooseAddRecordCategory('PRIVILEGING')" class="rounded-2xl border border-amber-200 bg-amber-50 hover:bg-amber-100 p-5 text-left transition">
                     <i class="ph ph-certificate text-2xl text-amber-700"></i><span class="block mt-2 font-bold text-slate-800">Privileging</span><span class="block mt-1 text-xs text-slate-500">Bilangan staf dilantik dan staf Islam</span>
                 </button>
+                <button type="button" id="chooseKehadiranCategory" onclick="chooseAddRecordCategory('DATA KEHADIRAN KURSUS')" class="rounded-2xl border border-blue-200 bg-blue-50 hover:bg-blue-100 p-5 text-left transition"><i class="ph ph-users-three text-2xl text-blue-700"></i><span class="block mt-2 font-bold text-slate-800">Kehadiran Kursus</span><span class="block mt-1 text-xs text-slate-500">Tambah rekod staf dan penyertaan kursus</span></button>
             </div>
             <p id="addCategoryNote" class="text-xs text-slate-500 mt-4"></p>
         </div>
@@ -275,6 +276,40 @@
           <div class="flex justify-end gap-2"><button type="button" onclick="closeAdverseEventModal()" class="rounded-xl border px-4 py-2.5 text-sm">Batal</button><button id="saveAdverseEventButton" type="submit" class="rounded-xl bg-rose-600 text-white px-5 py-2.5 text-sm font-semibold">Simpan Rekod Adverse Event</button></div>
         </form>
       </div>
+    </div>
+
+    <div id="kehadiran2027Modal" class="modal-backdrop hidden" onclick="closeKehadiran2027Modal(event)">
+        <div class="modal-card" style="max-height:92vh;overflow-y:auto" onclick="event.stopPropagation()">
+            <div class="flex items-start justify-between gap-4 pb-4 border-b border-slate-100">
+                <div><p class="section-label">DATA KEHADIRAN KURSUS 2027</p><h3 class="dashboard-heading text-xl font-bold text-slate-900 mt-1">Tambah Rekod Kehadiran Kursus</h3><p class="text-sm text-slate-500 mt-1">Rekod akan disimpan ke tab wad yang dipilih.</p></div>
+                <button type="button" onclick="closeKehadiran2027Modal()" class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600"><i class="ph ph-x"></i></button>
+            </div>
+            <form id="kehadiran2027EntryForm" class="py-5 space-y-4" onsubmit="submitKehadiran2027Entry(event)">
+                <label class="block text-sm font-semibold text-slate-600">Wad
+                    <select id="kehadiran2027Ward" class="filter-control w-full mt-1" required><option value="">Pilih wad</option></select>
+                </label>
+                <label class="block text-sm font-semibold text-slate-600">Nama Staf
+                    <input id="kehadiran2027Name" type="text" maxlength="150" required class="w-full mt-1 rounded-xl border border-slate-200 px-3 py-3 text-sm outline-none focus:border-blue-500" placeholder="Nama penuh staf">
+                </label>
+                <label class="block text-sm font-semibold text-slate-600">Jawatan
+                    <input id="kehadiran2027Position" type="text" maxlength="120" required class="w-full mt-1 rounded-xl border border-slate-200 px-3 py-3 text-sm outline-none focus:border-blue-500" placeholder="Jawatan staf">
+                </label>
+                <label class="block text-sm font-semibold text-slate-600">Kursus Pengurusan Ibadah Pesakit
+                    <input id="kehadiran2027Course" type="text" maxlength="200" class="w-full mt-1 rounded-xl border border-slate-200 px-3 py-3 text-sm outline-none focus:border-blue-500" placeholder="Isi jika berkenaan">
+                </label>
+                <label class="block text-sm font-semibold text-slate-600">TOT Pengurusan Ibadah Pesakit
+                    <input id="kehadiran2027TOT" type="text" maxlength="200" class="w-full mt-1 rounded-xl border border-slate-200 px-3 py-3 text-sm outline-none focus:border-blue-500" placeholder="Isi jika berkenaan">
+                </label>
+                <label class="block text-sm font-semibold text-slate-600">Spiritual Care
+                    <input id="kehadiran2027Spiritual" type="text" maxlength="200" class="w-full mt-1 rounded-xl border border-slate-200 px-3 py-3 text-sm outline-none focus:border-blue-500" placeholder="Isi jika berkenaan">
+                </label>
+                <p id="kehadiran2027EntryMessage" class="hidden rounded-xl p-3 text-sm font-semibold" role="status"></p>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeKehadiran2027Modal()" class="rounded-xl border border-slate-200 px-4 py-2.5 text-sm">Batal</button>
+                    <button id="saveKehadiran2027Button" type="submit" class="rounded-xl bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 text-sm font-semibold">Simpan Rekod Kehadiran</button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <div id="addRecordModal" class="modal-backdrop hidden" onclick="closeAddRecordModal(event)">
@@ -542,7 +577,7 @@
                     const meta = getMeta(name);
                     const btn = document.createElement('button');
                     btn.className = 'category-btn' + (name === selectedTab ? ' active' : '');
-                    const pending2027 = selectedYear === '2027' && ['DATA KEHADIRAN KURSUS'].includes(name);
+                    const pending2027 = false;
                     btn.innerHTML = '<i class="ph ' + meta.icon + ' text-lg"></i><span>' + escapeHTML(meta.label) + (pending2027 ? '<small class="block text-[9px] opacity-70 font-semibold">BELUM DIAKTIFKAN</small>' : '') + '</span>';
                     btn.title = pending2027 ? 'Spreadsheet kategori ini belum dikonfigurasikan untuk 2027' : meta.desc;
                     btn.onclick = () => selectTab(name);
@@ -580,26 +615,17 @@
                 document.getElementById('statusFilter').value = 'all';
                 document.getElementById('monthFilter').value = 'all';
                 buildCategoryNav();
-                if (selectedYear === '2027' && ['DATA KEHADIRAN KURSUS'].includes(name)) {
-                    const view = document.getElementById('dataView');
-                    totalWards = 0;
-                    document.getElementById('wardFilter').innerHTML = '<option value="">Belum tersedia</option>';
-                    document.getElementById('kpiRows').textContent = '—';
-                    document.getElementById('dataSubtitle').textContent = getMeta(name).label + ' • Tahun 2027';
-                    document.getElementById('tableSummary').textContent = 'Kategori belum diaktifkan';
-                    document.getElementById('allPieSubtitle').textContent = 'Kategori belum diaktifkan';
-                    document.getElementById('allBarSubtitle').textContent = 'Kategori belum diaktifkan';
-                    window.currentModel = null;
-                    view.innerHTML = '<div class="min-h-[300px] flex items-center justify-center p-6"><div class="text-center max-w-lg"><div class="w-14 h-14 mx-auto rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center"><i class="ph ph-hourglass-medium text-2xl"></i></div><h3 class="font-bold text-slate-800 mt-3">' + escapeHTML(getMeta(name).label) + ' 2027</h3><p class="text-sm text-slate-500 mt-2">Kategori ini telah disediakan pada dashboard. Spreadsheet dan sambungan data akan diaktifkan selepas struktur RETEN 2027 disediakan.</p></div></div>';
-                    return;
-                }
                 if (selectedYear === '2027') {
                     const view = document.getElementById('dataView');
                     view.innerHTML = '<div class="min-h-[300px] flex items-center justify-center text-slate-400"><div class="text-center"><i class="ph ph-spinner-gap animate-spin text-4xl text-blue-500"></i><p class="mt-3 font-medium">Memuatkan senarai wad ' + escapeHTML(getMeta(name).label) + ' 2027...</p></div></div>';
                     try {
-                        const result = await callAPI({action:'list2027', category:name});
+                        const result = name === 'DATA KEHADIRAN KURSUS'
+                            ? await callAPI({action:'listKehadiran2027'})
+                            : await callAPI({action:'list2027', category:name});
                         if (!result || !result.success || !Array.isArray(result.wards)) throw new Error((result && result.message) || 'Senarai wad kategori ' + name + ' tidak dapat dibaca.');
-                        const wards = result.wards.map(w => ({id:w.id || w.name,name:w.name}));
+                        const wards = name === 'DATA KEHADIRAN KURSUS'
+                            ? result.wards.map(w => ({id:String(w),name:String(w)}))
+                            : result.wards.map(w => ({id:w.id || w.name,name:w.name}));
                         totalWards = wards.length;
                         const wardFilter = document.getElementById('wardFilter');
                         wardFilter.innerHTML = '<option value="">Pilih Wad (' + totalWards + ' tersedia)</option>' +
@@ -660,11 +686,18 @@
                         if (wardCategoryCache[cacheKey]) {
                             ward = wardCategoryCache[cacheKey];
                         } else {
-                            const action = 'getWard' + selectedYear;
-                            const result = await callAPI({action:action, id:selectedWardId, category:selectedTab});
-                            if (sequence !== loadSequence) return;
-                            if (!result || !result.success || !result.ward) throw new Error((result && result.message) || 'Data tahun ' + selectedYear + ' tidak dapat dibaca.');
-                            ward = result.ward;
+                            if (selectedYear === '2027' && selectedTab === 'DATA KEHADIRAN KURSUS') {
+                                const result = await callAPI({action:'getKehadiran2027', ward:wardName});
+                                if (sequence !== loadSequence) return;
+                                if (!result || !result.success || !Array.isArray(result.rows)) throw new Error((result && result.message) || 'Data Kehadiran Kursus 2027 tidak dapat dibaca.');
+                                ward = {name:result.ward || wardName, categories:{'DATA KEHADIRAN KURSUS':{success:true,values:result.rows}}};
+                            } else {
+                                const action = 'getWard' + selectedYear;
+                                const result = await callAPI({action:action, id:selectedWardId, category:selectedTab});
+                                if (sequence !== loadSequence) return;
+                                if (!result || !result.success || !result.ward) throw new Error((result && result.message) || 'Data tahun ' + selectedYear + ' tidak dapat dibaca.');
+                                ward = result.ward;
+                            }
                             wardCategoryCache[cacheKey] = ward;
                         }
                     } else if (wardCategoryCache[cacheKey]) {
@@ -968,37 +1001,31 @@
             }
 
             function parseAttendance(rows) {
-                const data=[];
-                const clean=v=>String(v??'').trim();
-                for(let i=0;i<rows.length;i++){
-                    const r=Array.isArray(rows[i])?rows[i]:[];
-                    // Cari pasangan nombor bil + nama staf pada mana-mana dua kolum bersebelahan.
-                    // Sesetengah fail reten bermula dari kolum A, sesetengahnya dari kolum B.
-                    let bilIndex=-1;
-                    for(let c=0;c<Math.min(r.length-1,3);c++){
-                        if(/^\d+(?:\.0)?$/.test(clean(r[c])) && clean(r[c+1])){
-                            bilIndex=c;
-                            break;
-                        }
-                    }
-                    if(bilIndex<0) continue;
-                    const nameIndex=bilIndex+1;
-                    const name=clean(r[nameIndex]);
-                    // Abaikan tajuk jadual dan baris kosong.
-                    if(!name || /^(NAMA STAF|NAMA|BIL)$/i.test(name)) continue;
-                    const position=clean(r[nameIndex+1]);
-                    const ward=clean(r[nameIndex+2]);
-                    const course=clean(r[nameIndex+3]);
-                    const date=clean(r[nameIndex+4]);
-                    const organiser=clean(r[nameIndex+5]);
-                    // Rekod staf mesti mempunyai sekurang-kurangnya nama dan satu butiran latihan.
-                    if(!position && !ward && !course && !date && !organiser) continue;
+                const data = [];
+                const clean = v => String(v ?? '').trim();
+                (Array.isArray(rows) ? rows : []).forEach((r, i) => {
+                    if (!Array.isArray(r)) return;
+                    const bil = clean(r[0]);
+                    const name = clean(r[1]);
+                    if (!name || /^(NAMA STAF|NAMA)$/i.test(name)) return;
                     data.push({
-                        bil:clean(r[bilIndex]),
-                        name,position,ward,course,date,organiser,raw:r
+                        bil: bil || String(i + 1),
+                        name: name,
+                        position: clean(r[2]),
+                        ward: clean(r[3]),
+                        course: clean(r[4]),
+                        tot: clean(r[5]),
+                        spiritualCare: clean(r[6]),
+                        values: r,
+                        raw: r
                     });
-                }
-                return {kind:'attendance',headers:['Nama Staf','Jawatan','Wad','Jenis Latihan Dihadiri','Tarikh Latihan','Anjuran'],rows:data,title:'Kehadiran Kursus'};
+                });
+                return {
+                    kind: 'attendance',
+                    headers: ['BILANGAN','Nama Staf','Jawatan','Wad','Kursus Pengurusan Ibadah Pesakit','TOT Pengurusan Ibadah Pesakit','Spiritual Care'],
+                    rows: data,
+                    title: 'Kehadiran Kursus'
+                };
             }
 
             function parseGeneric(rows) {
@@ -1073,18 +1100,21 @@
                 let html = '';
 
                 if (model.kind === 'attendance') {
-                    html = '<div class="overflow-x-auto p-3 sm:p-5"><table class="w-full min-w-[900px] border-collapse"><thead><tr class="bg-slate-100 text-slate-600 text-xs"><th class="p-3 text-center">BIL</th>' +
-                        (showWardColumn ? '<th class="p-3 text-left">WAD</th>' : '') +
-                        '<th class="p-3 text-left">NAMA STAF</th><th class="p-3 text-left">JAWATAN</th><th class="p-3 text-left">JENIS LATIHAN DIHADIRI</th><th class="p-3 text-left">TARIKH LATIHAN</th><th class="p-3 text-left">ANJURAN</th></tr></thead><tbody>';
-                    rows.forEach((item,idx)=>{
+                    html = '<div class="overflow-x-auto p-3 sm:p-5"><table class="w-full min-w-[1150px] border-collapse"><thead><tr class="bg-slate-100 text-slate-600 text-xs">' +
+                        '<th class="p-3 text-center">BILANGAN</th><th class="p-3 text-left">NAMA STAF</th><th class="p-3 text-left">JAWATAN</th><th class="p-3 text-left">WAD</th>' +
+                        '<th class="p-3 text-left">KURSUS PENGURUSAN IBADAH PESAKIT</th><th class="p-3 text-left">TOT PENGURUSAN IBADAH PESAKIT</th><th class="p-3 text-left">SPIRITUAL CARE</th></tr></thead><tbody>';
+                    if (!rows.length) {
+                        html += '<tr><td colspan="7" class="p-8 text-center text-sm text-slate-400">Belum ada rekod kehadiran kursus bagi wad ini.</td></tr>';
+                    }
+                    rows.forEach(item => {
                         html += '<tr class="border-t border-slate-100 hover:bg-teal-50/40">' +
-                            '<td class="p-3 text-center text-sm text-slate-500">'+(idx+1)+'</td>' +
-                            (showWardColumn ? '<td class="p-3 text-sm font-semibold text-blue-700">'+escapeHTML(item.ward||'—')+'</td>' : '') +
+                            '<td class="p-3 text-center text-sm text-slate-500">'+escapeHTML(item.bil || '—')+'</td>' +
                             '<td class="p-3 text-sm font-semibold text-slate-800">'+escapeHTML(item.name)+'</td>' +
                             '<td class="p-3 text-sm">'+escapeHTML(item.position||'—')+'</td>' +
+                            '<td class="p-3 text-sm font-semibold text-blue-700">'+escapeHTML(item.ward || item.wardName || '—')+'</td>' +
                             '<td class="p-3 text-sm">'+escapeHTML(item.course||'—')+'</td>' +
-                            '<td class="p-3 text-sm whitespace-nowrap">'+escapeHTML(item.date||'—')+'</td>' +
-                            '<td class="p-3 text-sm">'+escapeHTML(item.organiser||'—')+'</td></tr>';
+                            '<td class="p-3 text-sm">'+escapeHTML(item.tot||'—')+'</td>' +
+                            '<td class="p-3 text-sm">'+escapeHTML(item.spiritualCare||'—')+'</td></tr>';
                     });
                     html += '</tbody></table></div>';
                 } else if (model.kind === 'adverse') {
@@ -1334,7 +1364,9 @@
                     if (selectedYear !== '2026') {
                         if (selectedYear === '2027') {
                             const requestedCategory = selectedTab || 'KEMUDAHAN';
-                            result = await callAPI({action:'list2027', category:requestedCategory});
+                            result = requestedCategory === 'DATA KEHADIRAN KURSUS'
+                                ? await callAPI({action:'listKehadiran2027'})
+                                : await callAPI({action:'list2027', category:requestedCategory});
                             if (!result || !result.success || !Array.isArray(result.wards)) throw new Error((result && result.message) || 'Senarai wad 2027 tidak dapat dibaca.');
                             allCategories = ['KEMUDAHAN','ORIENTASI','LATIHAN','PRIVILEGING','ADVERSE EVENT','DATA KEHADIRAN KURSUS'];
                         } else {
@@ -1342,7 +1374,9 @@
                             result = await callAPI({action:'list' + selectedYear});
                             if (!result || !result.success || !Array.isArray(result.wards)) throw new Error((result && result.message) || 'Senarai wad tahun ' + selectedYear + ' tidak dapat dibaca.');
                         }
-                        wards = result.wards.map(w => ({id:w.id || w.name,name:w.name}));
+                        wards = selectedTab === 'DATA KEHADIRAN KURSUS'
+                            ? result.wards.map(w => ({id:String(w),name:String(w)}))
+                            : result.wards.map(w => ({id:w.id || w.name,name:w.name}));
                     } else {
                         result = await callAPI({action:'list'});
                         if (!result || !result.success || !Array.isArray(result.wards)) throw new Error((result && result.message) || 'Senarai wad tidak dapat dibaca.');
@@ -1516,9 +1550,11 @@
                 const privilegingButton = document.getElementById('choosePrivilegingCategory');
                 const adverseButton = document.getElementById('chooseAdverseEventCategory');
                 if (adverseButton) adverseButton.style.display = selectedYear === '2027' ? '' : 'none';
+                const kehadiranButton = document.getElementById('chooseKehadiranCategory');
+                if (kehadiranButton) kehadiranButton.style.display = selectedYear === '2027' ? '' : 'none';
                 if (privilegingButton) privilegingButton.style.display = selectedYear === '2027' ? '' : 'none';
                 if (note) note.textContent = selectedYear === '2027'
-                    ? 'Tahun 2027: kategori Kemudahan, Orientasi, Latihan, Privileging dan Adverse Event tersedia.'
+                    ? 'Tahun 2027: kategori Kemudahan, Orientasi, Latihan, Privileging, Adverse Event dan Kehadiran Kursus tersedia.'
                     : 'Kategori tambah rekod hanya tersedia untuk tahun 2027.';
                 const modal = document.getElementById('addCategoryModal');
                 modal.classList.remove('hidden'); modal.classList.add('flex');
@@ -1543,8 +1579,70 @@
                     return;
                 }
                 if (category === 'ADVERSE EVENT') { openAdverseEventModal(); return; }
+                if (category === 'DATA KEHADIRAN KURSUS') { openKehadiran2027Modal(); return; }
                 openKemudahanModal();
             }
+            let kehadiran2027SaveResponseTimer = null;
+            function openKehadiran2027Modal() {
+                if (!sessionStorage.getItem('hmiAdminToken')) { alert('Sila log masuk sebagai Admin terlebih dahulu.'); return; }
+                if (selectedYear !== '2027') { alert('Tambah rekod Kehadiran Kursus hanya diaktifkan untuk Tahun 2027.'); return; }
+                const wardSelect = document.getElementById('kehadiran2027Ward');
+                wardSelect.innerHTML = '<option value="">Pilih wad</option>' +
+                    HMI_2027_ORIENTASI_WARDS.map(n => '<option value="' + escapeHTML(n) + '">' + escapeHTML(n) + '</option>').join('');
+                document.getElementById('kehadiran2027EntryForm').reset();
+                const msg = document.getElementById('kehadiran2027EntryMessage');
+                msg.textContent = ''; msg.className = 'hidden rounded-xl p-3 text-sm font-semibold';
+                const btn = document.getElementById('saveKehadiran2027Button');
+                btn.disabled = false; btn.textContent = 'Simpan Rekod Kehadiran';
+                const modal = document.getElementById('kehadiran2027Modal');
+                modal.classList.remove('hidden'); modal.classList.add('flex');
+            }
+            function closeKehadiran2027Modal(event) {
+                if (event && event.target !== document.getElementById('kehadiran2027Modal')) return;
+                const modal = document.getElementById('kehadiran2027Modal');
+                modal.classList.add('hidden'); modal.classList.remove('flex');
+            }
+            function submitKehadiran2027Entry(event) {
+                event.preventDefault();
+                const btn = document.getElementById('saveKehadiran2027Button');
+                if (btn.disabled) return;
+                const msg = document.getElementById('kehadiran2027EntryMessage');
+                const token = sessionStorage.getItem('hmiAdminToken');
+                const ward = document.getElementById('kehadiran2027Ward').value;
+                const name = document.getElementById('kehadiran2027Name').value.trim();
+                const position = document.getElementById('kehadiran2027Position').value.trim();
+                const course = document.getElementById('kehadiran2027Course').value.trim();
+                const tot = document.getElementById('kehadiran2027TOT').value.trim();
+                const spiritual = document.getElementById('kehadiran2027Spiritual').value.trim();
+                const fail = text => { msg.textContent = text; msg.className = 'rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm font-semibold text-rose-700'; };
+                if (!token) return fail('Sesi Admin tiada atau tamat. Sila log masuk semula.');
+                if (!ward) return fail('Sila pilih wad.');
+                if (!name) return fail('Nama staf wajib diisi.');
+                if (!position) return fail('Jawatan wajib diisi.');
+                const form = document.getElementById('hmiKehadiran2027PostForm');
+                form.action = window.HMI_API_URL;
+                document.getElementById('hmiKehadiran2027Token').value = token;
+                document.getElementById('hmiKehadiran2027WardPost').value = ward;
+                document.getElementById('hmiKehadiran2027NamePost').value = name;
+                document.getElementById('hmiKehadiran2027PositionPost').value = position;
+                document.getElementById('hmiKehadiran2027CoursePost').value = course;
+                document.getElementById('hmiKehadiran2027TOTPost').value = tot;
+                document.getElementById('hmiKehadiran2027SpiritualPost').value = spiritual;
+                btn.disabled = true; btn.textContent = 'Menyimpan...';
+                msg.textContent = 'Sedang menyimpan rekod ke spreadsheet 2027...';
+                msg.className = 'rounded-xl border border-blue-200 bg-blue-50 p-3 text-sm font-semibold text-blue-700';
+                form.submit();
+                if (kehadiran2027SaveResponseTimer) clearTimeout(kehadiran2027SaveResponseTimer);
+                kehadiran2027SaveResponseTimer = setTimeout(() => {
+                    btn.disabled = false; btn.textContent = 'Simpan Rekod Kehadiran';
+                    fail('Belum menerima pengesahan daripada Google Sheets. Semak tab wad dan Execution log sebelum cuba simpan semula.');
+                    kehadiran2027SaveResponseTimer = null;
+                }, 20000);
+            }
+            window.openKehadiran2027Modal = openKehadiran2027Modal;
+            window.closeKehadiran2027Modal = closeKehadiran2027Modal;
+            window.submitKehadiran2027Entry = submitKehadiran2027Entry;
+
             let adverseEventSaveResponseTimer = null;
             function openAdverseEventModal() {
               if (!sessionStorage.getItem('hmiAdminToken')) { alert('Sila log masuk sebagai Admin terlebih dahulu.'); return; }
@@ -1978,6 +2076,21 @@
                     }
                     return;
                 }
+                if (data.type === 'HMI_SAVE_KEHADIRAN_2027') {
+                    if (kehadiran2027SaveResponseTimer) { clearTimeout(kehadiran2027SaveResponseTimer); kehadiran2027SaveResponseTimer = null; }
+                    const btn = document.getElementById('saveKehadiran2027Button');
+                    const msg = document.getElementById('kehadiran2027EntryMessage');
+                    btn.disabled = false; btn.textContent = 'Simpan Rekod Kehadiran';
+                    msg.textContent = data.result.message || (data.result.success ? 'Rekod kehadiran berjaya disimpan.' : 'Rekod gagal disimpan.');
+                    msg.className = 'rounded-xl border p-3 text-sm font-semibold ' +
+                        (data.result.success ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-rose-200 bg-rose-50 text-rose-700');
+                    if (data.result.success) {
+                        const ward = document.getElementById('kehadiran2027Ward').value;
+                        delete wardCategoryCache[ward + '::DATA KEHADIRAN KURSUS'];
+                        if (selectedYear === '2027' && selectedTab === 'DATA KEHADIRAN KURSUS' && selectedWardId === ward) loadSelectedData();
+                    }
+                    return;
+                }
                 if (data.type === 'HMI_SAVE_ADVERSE_EVENT') {
                     if(adverseEventSaveResponseTimer){clearTimeout(adverseEventSaveResponseTimer);adverseEventSaveResponseTimer=null;}
                     const btn=document.getElementById('saveAdverseEventButton');btn.disabled=false;btn.textContent='Simpan Rekod Adverse Event';
@@ -2147,6 +2260,12 @@ nav .rounded-xl, nav .rounded-full {
         <input type="hidden" name="officer" id="hmiPrivilegingOfficer">
     </form>
     <form id="hmiAdverseEventPostForm" method="post" target="hmiSaveFrame" class="hidden"><input type="hidden" name="action" value="saveAdverseEvent2027"><input type="hidden" name="token" id="hmiAdverseEventToken"><input type="hidden" name="id" id="hmiAdverseEventWardPost"><input type="hidden" name="monthIndex" id="hmiAdverseEventMonthPost"><input type="hidden" name="skin" id="hmiAdverseEventSkinPost"><input type="hidden" name="fall" id="hmiAdverseEventFallPost"><input type="hidden" name="total" id="hmiAdverseEventTotalPost"></form>
+    <form id="hmiKehadiran2027PostForm" method="post" target="hmiSaveFrame" class="hidden">
+        <input type="hidden" name="action" value="addKehadiran2027"><input type="hidden" name="token" id="hmiKehadiran2027Token">
+        <input type="hidden" name="ward" id="hmiKehadiran2027WardPost"><input type="hidden" name="name" id="hmiKehadiran2027NamePost">
+        <input type="hidden" name="position" id="hmiKehadiran2027PositionPost"><input type="hidden" name="course" id="hmiKehadiran2027CoursePost">
+        <input type="hidden" name="tot" id="hmiKehadiran2027TOTPost"><input type="hidden" name="spiritualCare" id="hmiKehadiran2027SpiritualPost">
+    </form>
     <form id="hmiAdminPostForm" method="post" target="hmiAdminLoginFrame" class="hidden">
         <input type="hidden" name="action" value="adminLogin">
         <input type="hidden" name="password" id="hmiAdminPostPassword">
