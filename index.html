@@ -285,6 +285,7 @@
                 <button type="button" onclick="closeKehadiran2027Modal()" class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600"><i class="ph ph-x"></i></button>
             </div>
             <form id="kehadiran2027EntryForm" class="py-5 space-y-4" onsubmit="submitKehadiran2027Entry(event)">
+                <label class="block text-sm font-semibold text-slate-600">Tahun<select id="kehadiran2027Year" class="filter-control w-full mt-1" required></select></label>
                 <label class="block text-sm font-semibold text-slate-600">Wad
                     <select id="kehadiran2027Ward" class="filter-control w-full mt-1" required><option value="">Pilih wad</option></select>
                 </label>
@@ -1585,7 +1586,9 @@
             let kehadiran2027SaveResponseTimer = null;
             function openKehadiran2027Modal() {
                 if (!sessionStorage.getItem('hmiAdminToken')) { alert('Sila log masuk sebagai Admin terlebih dahulu.'); return; }
-                if (selectedYear !== '2027') { alert('Tambah rekod Kehadiran Kursus hanya diaktifkan untuk Tahun 2027.'); return; }
+                const yearSelect = document.getElementById('kehadiran2027Year');
+                yearSelect.innerHTML = Array.from({length: 74}, (_, i) => 2027 + i).map(y => '<option value="' + y + '">' + y + '</option>').join('');
+                yearSelect.value = String(Math.max(2027, Number(selectedYear) || 2027));
                 const wardSelect = document.getElementById('kehadiran2027Ward');
                 wardSelect.innerHTML = '<option value="">Pilih wad</option>' +
                     HMI_2027_ORIENTASI_WARDS.map(n => '<option value="' + escapeHTML(n) + '">' + escapeHTML(n) + '</option>').join('');
@@ -1608,6 +1611,7 @@
                 if (btn.disabled) return;
                 const msg = document.getElementById('kehadiran2027EntryMessage');
                 const token = sessionStorage.getItem('hmiAdminToken');
+                const year = document.getElementById('kehadiran2027Year').value;
                 const ward = document.getElementById('kehadiran2027Ward').value;
                 const name = document.getElementById('kehadiran2027Name').value.trim();
                 const position = document.getElementById('kehadiran2027Position').value.trim();
@@ -1622,6 +1626,7 @@
                 const form = document.getElementById('hmiKehadiran2027PostForm');
                 form.action = window.HMI_API_URL;
                 document.getElementById('hmiKehadiran2027Token').value = token;
+                document.getElementById('hmiKehadiran2027YearPost').value = year;
                 document.getElementById('hmiKehadiran2027WardPost').value = ward;
                 document.getElementById('hmiKehadiran2027NamePost').value = name;
                 document.getElementById('hmiKehadiran2027PositionPost').value = position;
@@ -1629,7 +1634,7 @@
                 document.getElementById('hmiKehadiran2027TOTPost').value = tot;
                 document.getElementById('hmiKehadiran2027SpiritualPost').value = spiritual;
                 btn.disabled = true; btn.textContent = 'Menyimpan...';
-                msg.textContent = 'Sedang menyimpan rekod ke spreadsheet 2027...';
+                msg.textContent = 'Sedang menyimpan rekod ke spreadsheet ' + year + '...';
                 msg.className = 'rounded-xl border border-blue-200 bg-blue-50 p-3 text-sm font-semibold text-blue-700';
                 form.submit();
                 if (kehadiran2027SaveResponseTimer) clearTimeout(kehadiran2027SaveResponseTimer);
@@ -2262,7 +2267,7 @@ nav .rounded-xl, nav .rounded-full {
     <form id="hmiAdverseEventPostForm" method="post" target="hmiSaveFrame" class="hidden"><input type="hidden" name="action" value="saveAdverseEvent2027"><input type="hidden" name="token" id="hmiAdverseEventToken"><input type="hidden" name="id" id="hmiAdverseEventWardPost"><input type="hidden" name="monthIndex" id="hmiAdverseEventMonthPost"><input type="hidden" name="skin" id="hmiAdverseEventSkinPost"><input type="hidden" name="fall" id="hmiAdverseEventFallPost"><input type="hidden" name="total" id="hmiAdverseEventTotalPost"></form>
     <form id="hmiKehadiran2027PostForm" method="post" target="hmiSaveFrame" class="hidden">
         <input type="hidden" name="action" value="addKehadiran2027"><input type="hidden" name="token" id="hmiKehadiran2027Token">
-        <input type="hidden" name="ward" id="hmiKehadiran2027WardPost"><input type="hidden" name="name" id="hmiKehadiran2027NamePost">
+        <input type="hidden" name="year" id="hmiKehadiran2027YearPost"><input type="hidden" name="ward" id="hmiKehadiran2027WardPost"><input type="hidden" name="name" id="hmiKehadiran2027NamePost">
         <input type="hidden" name="position" id="hmiKehadiran2027PositionPost"><input type="hidden" name="course" id="hmiKehadiran2027CoursePost">
         <input type="hidden" name="tot" id="hmiKehadiran2027TOTPost"><input type="hidden" name="spiritualCare" id="hmiKehadiran2027SpiritualPost">
     </form>
