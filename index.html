@@ -253,6 +253,7 @@
                 <button type="button" id="choosePrivilegingCategory" onclick="chooseAddRecordCategory('PRIVILEGING')" class="rounded-2xl border border-amber-200 bg-amber-50 hover:bg-amber-100 p-5 text-left transition">
                     <i class="ph ph-certificate text-2xl text-amber-700"></i><span class="block mt-2 font-bold text-slate-800">Privileging</span><span class="block mt-1 text-xs text-slate-500">Bilangan staf dilantik dan staf Islam</span>
                 </button>
+                <button type="button" id="chooseKehadiranCategory" onclick="chooseAddRecordCategory('DATA KEHADIRAN KURSUS')" class="rounded-2xl border border-blue-200 bg-blue-50 hover:bg-blue-100 p-5 text-left transition"><i class="ph ph-users-three text-2xl text-blue-700"></i><span class="block mt-2 font-bold text-slate-800">Kehadiran Kursus</span><span class="block mt-1 text-xs text-slate-500">Tambah rekod staf dan penyertaan kursus</span></button>
             </div>
             <p id="addCategoryNote" class="text-xs text-slate-500 mt-4"></p>
         </div>
@@ -275,6 +276,40 @@
           <div class="flex justify-end gap-2"><button type="button" onclick="closeAdverseEventModal()" class="rounded-xl border px-4 py-2.5 text-sm">Batal</button><button id="saveAdverseEventButton" type="submit" class="rounded-xl bg-rose-600 text-white px-5 py-2.5 text-sm font-semibold">Simpan Rekod Adverse Event</button></div>
         </form>
       </div>
+    </div>
+
+    <div id="kehadiran2027Modal" class="modal-backdrop hidden" onclick="closeKehadiran2027Modal(event)">
+        <div class="modal-card" style="max-height:92vh;overflow-y:auto" onclick="event.stopPropagation()">
+            <div class="flex items-start justify-between gap-4 pb-4 border-b border-slate-100">
+                <div><p class="section-label">DATA KEHADIRAN KURSUS 2027</p><h3 class="dashboard-heading text-xl font-bold text-slate-900 mt-1">Tambah Rekod Kehadiran Kursus</h3><p class="text-sm text-slate-500 mt-1">Rekod akan disimpan ke tab wad yang dipilih.</p></div>
+                <button type="button" onclick="closeKehadiran2027Modal()" class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600"><i class="ph ph-x"></i></button>
+            </div>
+            <form id="kehadiran2027EntryForm" class="py-5 space-y-4" onsubmit="submitKehadiran2027Entry(event)">
+                <label class="block text-sm font-semibold text-slate-600">Wad
+                    <select id="kehadiran2027Ward" class="filter-control w-full mt-1" required><option value="">Pilih wad</option></select>
+                </label>
+                <label class="block text-sm font-semibold text-slate-600">Nama Staf
+                    <input id="kehadiran2027Name" type="text" maxlength="150" required class="w-full mt-1 rounded-xl border border-slate-200 px-3 py-3 text-sm outline-none focus:border-blue-500" placeholder="Nama penuh staf">
+                </label>
+                <label class="block text-sm font-semibold text-slate-600">Jawatan
+                    <input id="kehadiran2027Position" type="text" maxlength="120" required class="w-full mt-1 rounded-xl border border-slate-200 px-3 py-3 text-sm outline-none focus:border-blue-500" placeholder="Jawatan staf">
+                </label>
+                <label class="block text-sm font-semibold text-slate-600">Kursus Pengurusan Ibadah Pesakit
+                    <input id="kehadiran2027Course" type="text" maxlength="200" class="w-full mt-1 rounded-xl border border-slate-200 px-3 py-3 text-sm outline-none focus:border-blue-500" placeholder="Isi jika berkenaan">
+                </label>
+                <label class="block text-sm font-semibold text-slate-600">TOT Pengurusan Ibadah Pesakit
+                    <input id="kehadiran2027TOT" type="text" maxlength="200" class="w-full mt-1 rounded-xl border border-slate-200 px-3 py-3 text-sm outline-none focus:border-blue-500" placeholder="Isi jika berkenaan">
+                </label>
+                <label class="block text-sm font-semibold text-slate-600">Spiritual Care
+                    <input id="kehadiran2027Spiritual" type="text" maxlength="200" class="w-full mt-1 rounded-xl border border-slate-200 px-3 py-3 text-sm outline-none focus:border-blue-500" placeholder="Isi jika berkenaan">
+                </label>
+                <p id="kehadiran2027EntryMessage" class="hidden rounded-xl p-3 text-sm font-semibold" role="status"></p>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeKehadiran2027Modal()" class="rounded-xl border border-slate-200 px-4 py-2.5 text-sm">Batal</button>
+                    <button id="saveKehadiran2027Button" type="submit" class="rounded-xl bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 text-sm font-semibold">Simpan Rekod Kehadiran</button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <div id="addRecordModal" class="modal-backdrop hidden" onclick="closeAddRecordModal(event)">
@@ -1515,9 +1550,11 @@
                 const privilegingButton = document.getElementById('choosePrivilegingCategory');
                 const adverseButton = document.getElementById('chooseAdverseEventCategory');
                 if (adverseButton) adverseButton.style.display = selectedYear === '2027' ? '' : 'none';
+                const kehadiranButton = document.getElementById('chooseKehadiranCategory');
+                if (kehadiranButton) kehadiranButton.style.display = selectedYear === '2027' ? '' : 'none';
                 if (privilegingButton) privilegingButton.style.display = selectedYear === '2027' ? '' : 'none';
                 if (note) note.textContent = selectedYear === '2027'
-                    ? 'Tahun 2027: kategori Kemudahan, Orientasi, Latihan, Privileging dan Adverse Event tersedia.'
+                    ? 'Tahun 2027: kategori Kemudahan, Orientasi, Latihan, Privileging, Adverse Event dan Kehadiran Kursus tersedia.'
                     : 'Kategori tambah rekod hanya tersedia untuk tahun 2027.';
                 const modal = document.getElementById('addCategoryModal');
                 modal.classList.remove('hidden'); modal.classList.add('flex');
@@ -1542,8 +1579,70 @@
                     return;
                 }
                 if (category === 'ADVERSE EVENT') { openAdverseEventModal(); return; }
+                if (category === 'DATA KEHADIRAN KURSUS') { openKehadiran2027Modal(); return; }
                 openKemudahanModal();
             }
+            let kehadiran2027SaveResponseTimer = null;
+            function openKehadiran2027Modal() {
+                if (!sessionStorage.getItem('hmiAdminToken')) { alert('Sila log masuk sebagai Admin terlebih dahulu.'); return; }
+                if (selectedYear !== '2027') { alert('Tambah rekod Kehadiran Kursus hanya diaktifkan untuk Tahun 2027.'); return; }
+                const wardSelect = document.getElementById('kehadiran2027Ward');
+                wardSelect.innerHTML = '<option value="">Pilih wad</option>' +
+                    HMI_2027_ORIENTASI_WARDS.map(n => '<option value="' + escapeHTML(n) + '">' + escapeHTML(n) + '</option>').join('');
+                document.getElementById('kehadiran2027EntryForm').reset();
+                const msg = document.getElementById('kehadiran2027EntryMessage');
+                msg.textContent = ''; msg.className = 'hidden rounded-xl p-3 text-sm font-semibold';
+                const btn = document.getElementById('saveKehadiran2027Button');
+                btn.disabled = false; btn.textContent = 'Simpan Rekod Kehadiran';
+                const modal = document.getElementById('kehadiran2027Modal');
+                modal.classList.remove('hidden'); modal.classList.add('flex');
+            }
+            function closeKehadiran2027Modal(event) {
+                if (event && event.target !== document.getElementById('kehadiran2027Modal')) return;
+                const modal = document.getElementById('kehadiran2027Modal');
+                modal.classList.add('hidden'); modal.classList.remove('flex');
+            }
+            function submitKehadiran2027Entry(event) {
+                event.preventDefault();
+                const btn = document.getElementById('saveKehadiran2027Button');
+                if (btn.disabled) return;
+                const msg = document.getElementById('kehadiran2027EntryMessage');
+                const token = sessionStorage.getItem('hmiAdminToken');
+                const ward = document.getElementById('kehadiran2027Ward').value;
+                const name = document.getElementById('kehadiran2027Name').value.trim();
+                const position = document.getElementById('kehadiran2027Position').value.trim();
+                const course = document.getElementById('kehadiran2027Course').value.trim();
+                const tot = document.getElementById('kehadiran2027TOT').value.trim();
+                const spiritual = document.getElementById('kehadiran2027Spiritual').value.trim();
+                const fail = text => { msg.textContent = text; msg.className = 'rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm font-semibold text-rose-700'; };
+                if (!token) return fail('Sesi Admin tiada atau tamat. Sila log masuk semula.');
+                if (!ward) return fail('Sila pilih wad.');
+                if (!name) return fail('Nama staf wajib diisi.');
+                if (!position) return fail('Jawatan wajib diisi.');
+                const form = document.getElementById('hmiKehadiran2027PostForm');
+                form.action = window.HMI_API_URL;
+                document.getElementById('hmiKehadiran2027Token').value = token;
+                document.getElementById('hmiKehadiran2027WardPost').value = ward;
+                document.getElementById('hmiKehadiran2027NamePost').value = name;
+                document.getElementById('hmiKehadiran2027PositionPost').value = position;
+                document.getElementById('hmiKehadiran2027CoursePost').value = course;
+                document.getElementById('hmiKehadiran2027TOTPost').value = tot;
+                document.getElementById('hmiKehadiran2027SpiritualPost').value = spiritual;
+                btn.disabled = true; btn.textContent = 'Menyimpan...';
+                msg.textContent = 'Sedang menyimpan rekod ke spreadsheet 2027...';
+                msg.className = 'rounded-xl border border-blue-200 bg-blue-50 p-3 text-sm font-semibold text-blue-700';
+                form.submit();
+                if (kehadiran2027SaveResponseTimer) clearTimeout(kehadiran2027SaveResponseTimer);
+                kehadiran2027SaveResponseTimer = setTimeout(() => {
+                    btn.disabled = false; btn.textContent = 'Simpan Rekod Kehadiran';
+                    fail('Belum menerima pengesahan daripada Google Sheets. Semak tab wad dan Execution log sebelum cuba simpan semula.');
+                    kehadiran2027SaveResponseTimer = null;
+                }, 20000);
+            }
+            window.openKehadiran2027Modal = openKehadiran2027Modal;
+            window.closeKehadiran2027Modal = closeKehadiran2027Modal;
+            window.submitKehadiran2027Entry = submitKehadiran2027Entry;
+
             let adverseEventSaveResponseTimer = null;
             function openAdverseEventModal() {
               if (!sessionStorage.getItem('hmiAdminToken')) { alert('Sila log masuk sebagai Admin terlebih dahulu.'); return; }
@@ -1977,6 +2076,21 @@
                     }
                     return;
                 }
+                if (data.type === 'HMI_SAVE_KEHADIRAN_2027') {
+                    if (kehadiran2027SaveResponseTimer) { clearTimeout(kehadiran2027SaveResponseTimer); kehadiran2027SaveResponseTimer = null; }
+                    const btn = document.getElementById('saveKehadiran2027Button');
+                    const msg = document.getElementById('kehadiran2027EntryMessage');
+                    btn.disabled = false; btn.textContent = 'Simpan Rekod Kehadiran';
+                    msg.textContent = data.result.message || (data.result.success ? 'Rekod kehadiran berjaya disimpan.' : 'Rekod gagal disimpan.');
+                    msg.className = 'rounded-xl border p-3 text-sm font-semibold ' +
+                        (data.result.success ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-rose-200 bg-rose-50 text-rose-700');
+                    if (data.result.success) {
+                        const ward = document.getElementById('kehadiran2027Ward').value;
+                        delete wardCategoryCache[ward + '::DATA KEHADIRAN KURSUS'];
+                        if (selectedYear === '2027' && selectedTab === 'DATA KEHADIRAN KURSUS' && selectedWardId === ward) loadSelectedData();
+                    }
+                    return;
+                }
                 if (data.type === 'HMI_SAVE_ADVERSE_EVENT') {
                     if(adverseEventSaveResponseTimer){clearTimeout(adverseEventSaveResponseTimer);adverseEventSaveResponseTimer=null;}
                     const btn=document.getElementById('saveAdverseEventButton');btn.disabled=false;btn.textContent='Simpan Rekod Adverse Event';
@@ -2146,6 +2260,12 @@ nav .rounded-xl, nav .rounded-full {
         <input type="hidden" name="officer" id="hmiPrivilegingOfficer">
     </form>
     <form id="hmiAdverseEventPostForm" method="post" target="hmiSaveFrame" class="hidden"><input type="hidden" name="action" value="saveAdverseEvent2027"><input type="hidden" name="token" id="hmiAdverseEventToken"><input type="hidden" name="id" id="hmiAdverseEventWardPost"><input type="hidden" name="monthIndex" id="hmiAdverseEventMonthPost"><input type="hidden" name="skin" id="hmiAdverseEventSkinPost"><input type="hidden" name="fall" id="hmiAdverseEventFallPost"><input type="hidden" name="total" id="hmiAdverseEventTotalPost"></form>
+    <form id="hmiKehadiran2027PostForm" method="post" target="hmiSaveFrame" class="hidden">
+        <input type="hidden" name="action" value="addKehadiran2027"><input type="hidden" name="token" id="hmiKehadiran2027Token">
+        <input type="hidden" name="ward" id="hmiKehadiran2027WardPost"><input type="hidden" name="name" id="hmiKehadiran2027NamePost">
+        <input type="hidden" name="position" id="hmiKehadiran2027PositionPost"><input type="hidden" name="course" id="hmiKehadiran2027CoursePost">
+        <input type="hidden" name="tot" id="hmiKehadiran2027TOTPost"><input type="hidden" name="spiritualCare" id="hmiKehadiran2027SpiritualPost">
+    </form>
     <form id="hmiAdminPostForm" method="post" target="hmiAdminLoginFrame" class="hidden">
         <input type="hidden" name="action" value="adminLogin">
         <input type="hidden" name="password" id="hmiAdminPostPassword">
