@@ -1509,7 +1509,7 @@
                     return selected ? selected.value : '';
                 });
 
-                if (!/^\\d{4}$/.test(year) || Number(year) < 2027 || Number(year) > 9999) {
+                if (!/^\d{4}$/.test(year) || Number(year) < 2027 || Number(year) > 9999) {
                     msg.textContent = 'Tahun Kemudahan mestilah 2027 atau tahun selepasnya.';
                     msg.classList.remove('hidden');
                     return;
