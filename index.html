@@ -609,6 +609,12 @@
             window.changeYear = changeYear;
 
             async function selectTab(name) {
+                if (Number(selectedYear) > 2027 && name !== 'KEMUDAHAN') {
+                    selectedTab = name;
+                    buildCategoryNav();
+                    document.getElementById('dataView').innerHTML = '<div class="min-h-[300px] flex items-center justify-center p-6 text-center text-slate-500"><div><i class="ph ph-hourglass-medium text-4xl"></i><p class="mt-2 font-semibold">Kategori ini belum dibuka untuk tahun ' + escapeHTML(selectedYear) + '.</p><p class="text-xs mt-1">Pelaksanaan tahun baharu sedang dibuat satu kad pada satu masa. Kad Kemudahan sudah tersedia dahulu.</p></div></div>';
+                    return;
+                }
                 const previousWardId = selectedWardId;
                 selectedTab = name;
                 document.getElementById('searchInput').value = '';
@@ -1438,6 +1444,17 @@
             ];
 
             const KEMUDAHAN_ITEMS = ['Ruang solat','Tempat wuduk','Penanda arah kiblat','Buku/Pamflet panduan ibadah','Sejadah/telekung/kain pelikat','Kit solat','Botol spray/debu tayammum','Pamflet/flyers/buku ibadah','Alquran/Yaasin','Takwim solat'];
+            function populateHmiYearOptions() {
+                const yearFilter = document.getElementById('yearFilter');
+                const entryYear = document.getElementById('entryYear');
+                const oldYear = selectedYear || '2027';
+                yearFilter.innerHTML = '<option value="2026">Tahun 2026</option><option value="2025">Tahun 2025</option><option value="2024">Tahun 2024</option><option value="2023">Tahun 2023</option>' + Array.from({length: 74}, (_, i) => 2027 + i).map(y => '<option value="' + y + '">Tahun ' + y + '</option>').join('');
+                entryYear.innerHTML = Array.from({length: 74}, (_, i) => 2027 + i).map(y => '<option value="' + y + '">' + y + '</option>').join('');
+                yearFilter.value = oldYear;
+                entryYear.value = String(Math.max(2027, Number(oldYear) || 2027));
+            }
+            populateHmiYearOptions();
+
             function buildKemudahanEntryItems() {
                 const host = document.getElementById('kemudahanStatusList');
                 if (!host || host.dataset.ready === '1') return;
@@ -1553,9 +1570,11 @@
                 const kehadiranButton = document.getElementById('chooseKehadiranCategory');
                 if (kehadiranButton) kehadiranButton.style.display = selectedYear === '2027' ? '' : 'none';
                 if (privilegingButton) privilegingButton.style.display = selectedYear === '2027' ? '' : 'none';
-                if (note) note.textContent = selectedYear === '2027'
-                    ? 'Tahun 2027: kategori Kemudahan, Orientasi, Latihan, Privileging, Adverse Event dan Kehadiran Kursus tersedia.'
-                    : 'Kategori tambah rekod hanya tersedia untuk tahun 2027.';
+                if (note) note.textContent = Number(selectedYear) > 2027
+                    ? 'Tahun ' + selectedYear + ': fungsi tambah rekod Kemudahan tersedia dahulu. Kategori lain akan dibuka secara berperingkat.'
+                    : (selectedYear === '2027'
+                        ? 'Tahun 2027: kategori Kemudahan, Orientasi, Latihan, Privileging, Adverse Event dan Kehadiran Kursus tersedia.'
+                        : 'Tambah rekod bagi tahun ini belum dibuka.');
                 const modal = document.getElementById('addCategoryModal');
                 modal.classList.remove('hidden'); modal.classList.add('flex');
             }
@@ -1685,7 +1704,7 @@
                 form.reset();
                 document.querySelectorAll('#kemudahanStatusList input[type="radio"]').forEach(input => { input.checked = false; });
                 const year = document.getElementById('yearFilter').value || selectedYear || '2027';
-                document.getElementById('entryYear').value = year;
+                document.getElementById('entryYear').value = String(Math.max(2027, Number(year) || 2027));
                 const wardSelect = document.getElementById('wardFilter');
                 const entryWard = document.getElementById('entryWard');
                 if (year === '2027') {
@@ -1705,7 +1724,7 @@
                 msg.classList.add('hidden');
                 const saveButton = document.getElementById('saveKemudahanButton');
                 saveButton.disabled = false;
-                saveButton.textContent = 'Simpan ke Sheet 2027';
+                saveButton.textContent = 'Simpan Rekod Kemudahan ' + document.getElementById('entryYear').value;
                 const modal = document.getElementById('addRecordModal');
                 modal.classList.remove('hidden'); modal.classList.add('flex');
             }
