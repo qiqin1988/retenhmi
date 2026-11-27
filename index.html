@@ -1569,6 +1569,7 @@
             window.updateKemudahanPreview = updateKemudahanPreview;
             function openAddRecordModal() {
                 if (!sessionStorage.getItem('hmiAdminToken')) { alert('Sila log masuk sebagai Admin terlebih dahulu.'); return; }
+                if (Number(selectedYear) < 2027) { alert('Tambah rekod Kemudahan bermula dari tahun 2027. Sila pilih tahun 2027 atau tahun selepasnya.'); return; }
                 const orientasiButton = document.getElementById('chooseOrientasiCategory');
                 const note = document.getElementById('addCategoryNote');
                 const latihanButton = document.getElementById('chooseLatihanCategory');
