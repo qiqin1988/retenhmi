@@ -357,7 +357,7 @@
                 </div>
                 <div class="flex flex-col sm:flex-row justify-end gap-2">
                     <button type="button" onclick="closeAddRecordModal()" class="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-bold text-slate-600">Tutup</button>
-                    <button id="saveKemudahanButton" type="submit" class="rounded-xl px-5 py-2.5 text-sm font-bold text-white" style="background:#76539b">Simpan ke Sheet 2027</button>
+                    <button id="saveKemudahanButton" type="submit" class="rounded-xl px-5 py-2.5 text-sm font-bold text-white" style="background:#76539b">Simpan Rekod Kemudahan</button>
                 </div>
                 <p id="kemudahanEntryPreview" class="hidden text-sm font-semibold text-violet-700" aria-live="polite"></p>
             </form>
@@ -624,7 +624,7 @@
                 buildCategoryNav();
                 if (selectedYear === '2027' || Number(selectedYear) > 2027) {
                     const view = document.getElementById('dataView');
-                    view.innerHTML = '<div class="min-h-[300px] flex items-center justify-center text-slate-400"><div class="text-center"><i class="ph ph-spinner-gap animate-spin text-4xl text-blue-500"></i><p class="mt-3 font-medium">Memuatkan senarai wad ' + escapeHTML(getMeta(name).label) + ' 2027...</p></div></div>';
+                    view.innerHTML = '<div class="min-h-[300px] flex items-center justify-center text-slate-400"><div class="text-center"><i class="ph ph-spinner-gap animate-spin text-4xl text-blue-500"></i><p class="mt-3 font-medium">Memuatkan senarai wad ' + escapeHTML(getMeta(name).label) + ' ' + escapeHTML(selectedYear) + '...</p></div></div>';
                     try {
                         const result = Number(selectedYear) > 2027
                             ? await callAPI({action:'listKemudahanYear', year:selectedYear})
@@ -642,7 +642,7 @@
                         selectedWardId = wards.some(w => String(w.id) === String(previousWardId)) ? previousWardId : '';
                         wardFilter.value = selectedWardId;
                         document.getElementById('kpiRows').textContent = totalWards;
-                        document.getElementById('dataSubtitle').textContent = totalWards + ' wad tersedia • ' + getMeta(name).label + ' 2027';
+                        document.getElementById('dataSubtitle').textContent = totalWards + ' wad tersedia • ' + getMeta(name).label + ' ' + selectedYear;
                         document.getElementById('tableSummary').textContent = totalWards + ' wad tersedia • Tahun 2027';
                         delete allWardChartCache[name];
                         delete wardCategoryCache[name];
@@ -1713,8 +1713,8 @@
                 const form = document.getElementById('kemudahanEntryForm');
                 form.reset();
                 document.querySelectorAll('#kemudahanStatusList input[type="radio"]').forEach(input => { input.checked = false; });
-                const year = document.getElementById('yearFilter').value || selectedYear || '2027';
-                document.getElementById('entryYear').value = String(Math.max(2027, Number(year) || 2027));
+                const year = String(Math.max(2027, Number(document.getElementById('yearFilter').value || selectedYear) || 2027));
+                document.getElementById('entryYear').value = year;
                 const wardSelect = document.getElementById('wardFilter');
                 const entryWard = document.getElementById('entryWard');
                 if (Number(year) >= 2027) {
