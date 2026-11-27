@@ -357,7 +357,7 @@
                 </div>
                 <div class="flex flex-col sm:flex-row justify-end gap-2">
                     <button type="button" onclick="closeAddRecordModal()" class="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-bold text-slate-600">Tutup</button>
-                    <button id="saveKemudahanButton" type="submit" class="rounded-xl px-5 py-2.5 text-sm font-bold text-white" style="background:#76539b">Simpan Rekod Kemudahan</button>
+                    <button id="saveKemudahanButton" type="submit" class="rounded-xl px-5 py-2.5 text-sm font-bold text-white" style="background:#76539b">Simpan Data</button>
                 </div>
                 <p id="kemudahanEntryPreview" class="hidden text-sm font-semibold text-violet-700" aria-live="polite"></p>
             </form>
@@ -1550,14 +1550,14 @@
                 document.getElementById('hmiSavePreparedBy').value = document.getElementById('entryPreparedBy').value.trim();
 
                 button.disabled = true;
-                button.textContent = 'Menyimpan...';
+                button.textContent = 'Menyimpan Data...';
                 msg.textContent = 'Sedang menyimpan rekod ke spreadsheet Kemudahan ' + year + '...';
                 msg.classList.remove('hidden');
                 document.getElementById('hmiSavePostForm').submit();
                 if (saveResponseTimer) clearTimeout(saveResponseTimer);
                 saveResponseTimer = setTimeout(() => {
                     button.disabled = false;
-                    button.textContent = 'Simpan Rekod Kemudahan ' + year;
+                    button.textContent = 'Simpan Data';
                     msg.textContent = 'Belum menerima pengesahan daripada Google Sheets. Jangan hantar semula dahulu. Semak tab wad dan Execution log Apps Script.';
                     msg.classList.remove('hidden');
                     msg.classList.remove('text-emerald-700');
@@ -1735,7 +1735,7 @@
                 msg.classList.add('hidden');
                 const saveButton = document.getElementById('saveKemudahanButton');
                 saveButton.disabled = false;
-                saveButton.textContent = 'Simpan Rekod Kemudahan ' + document.getElementById('entryYear').value;
+                saveButton.textContent = 'Simpan Data';
                 const modal = document.getElementById('addRecordModal');
                 modal.classList.remove('hidden'); modal.classList.add('flex');
             }
