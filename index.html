@@ -2049,6 +2049,7 @@
                         const savedYear = document.getElementById('entryYear').value;
                         const cacheKey = savedYear + '::' + document.getElementById('entryWard').value + '::KEMUDAHAN';
                         delete wardCategoryCache[cacheKey];
+                        delete allWardChartCache['KEMUDAHAN'];
                         if (selectedYear === savedYear && selectedTab === 'KEMUDAHAN' && selectedWardId === document.getElementById('entryWard').value) {
                             loadSelectedData();
                         }
