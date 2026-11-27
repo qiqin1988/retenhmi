@@ -352,9 +352,6 @@
                         <input id="entryPreparedBy" type="text" class="filter-control w-full mt-1" placeholder="Nama penyedia">
                     </label>
                 </div>
-                <div class="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">
-                    Rekod Tahun 2027 akan disimpan ke tab wad yang dipilih dalam satu fail RETEN HMI 2027. Jika bulan sama disimpan semula, status bulan tersebut akan dikemas kini.
-                </div>
                 <div class="flex flex-col sm:flex-row justify-end gap-2">
                     <button type="button" onclick="closeAddRecordModal()" class="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-bold text-slate-600">Tutup</button>
                     <button id="saveKemudahanButton" type="submit" class="rounded-xl px-5 py-2.5 text-sm font-bold text-white" style="background:#76539b">Simpan Data</button>
@@ -2040,7 +2037,7 @@
                     if (saveResponseTimer) { clearTimeout(saveResponseTimer); saveResponseTimer = null; }
                     const saveButton = document.getElementById('saveKemudahanButton');
                     saveButton.disabled = false;
-                    saveButton.textContent = 'Simpan Rekod Kemudahan ' + document.getElementById('entryYear').value;
+                    saveButton.textContent = 'Simpan Data';
                     const saveMessage = document.getElementById('kemudahanEntryPreview');
                     saveMessage.textContent = data.result.message || (data.result.success ? 'Rekod berjaya disimpan.' : 'Rekod gagal disimpan.');
                     saveMessage.classList.remove('hidden');
