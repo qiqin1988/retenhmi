@@ -1340,7 +1340,9 @@
 
                 if (!allWardChartCache[category] && !window.loadingAllWardCharts) {
                     window.loadingAllWardCharts = category;
-                    callAPI({action:selectedYear === '2027' ? 'getCategoryAll2027' : 'getCategoryAll',category:category}).then(result => {
+                    callAPI(Number(selectedYear) > 2027
+                        ? {action:'getCategoryAllKemudahanYear', year:selectedYear}
+                        : {action:selectedYear === '2027' ? 'getCategoryAll2027' : 'getCategoryAll',category:category}).then(result => {
                         if (result && result.success && Array.isArray(result.wards)) {
                             allWardChartCache[category] = result.wards;
                             if (window.currentModel && window.currentModel.category === category) renderCharts(window.currentModel);
@@ -1455,17 +1457,6 @@
             ];
 
             const KEMUDAHAN_ITEMS = ['Ruang solat','Tempat wuduk','Penanda arah kiblat','Buku/Pamflet panduan ibadah','Sejadah/telekung/kain pelikat','Kit solat','Botol spray/debu tayammum','Pamflet/flyers/buku ibadah','Alquran/Yaasin','Takwim solat'];
-            function populateHmiYearOptions() {
-                const yearFilter = document.getElementById('yearFilter');
-                const entryYear = document.getElementById('entryYear');
-                const current = selectedYear || '2027';
-                yearFilter.innerHTML = '<option value="2026">Tahun 2026</option><option value="2025">Tahun 2025</option><option value="2024">Tahun 2024</option><option value="2023">Tahun 2023</option>' + Array.from({length: 74}, (_, i) => 2027 + i).map(y => '<option value="' + y + '">Tahun ' + y + '</option>').join('');
-                entryYear.innerHTML = Array.from({length: 74}, (_, i) => 2027 + i).map(y => '<option value="' + y + '">' + y + '</option>').join('');
-                yearFilter.value = current;
-                entryYear.value = String(Math.max(2027, Number(current) || 2027));
-            }
-            populateHmiYearOptions();
-
             function populateHmiYearOptions() {
                 const yearFilter = document.getElementById('yearFilter');
                 const entryYear = document.getElementById('entryYear');
