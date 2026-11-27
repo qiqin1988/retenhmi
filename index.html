@@ -643,7 +643,7 @@
                         wardFilter.value = selectedWardId;
                         document.getElementById('kpiRows').textContent = totalWards;
                         document.getElementById('dataSubtitle').textContent = totalWards + ' wad tersedia • ' + getMeta(name).label + ' ' + selectedYear;
-                        document.getElementById('tableSummary').textContent = totalWards + ' wad tersedia • Tahun 2027';
+                        document.getElementById('tableSummary').textContent = totalWards + ' wad tersedia • Tahun ' + selectedYear;
                         delete allWardChartCache[name];
                         delete wardCategoryCache[name];
                         if (selectedWardId) {
@@ -1386,7 +1386,7 @@
                                 : (requestedCategory === 'DATA KEHADIRAN KURSUS'
                                     ? await callAPI({action:'listKehadiran2027'})
                                     : await callAPI({action:'list2027', category:requestedCategory}));
-                            if (!result || !result.success || !Array.isArray(result.wards)) throw new Error((result && result.message) || 'Senarai wad 2027 tidak dapat dibaca.');
+                            if (!result || !result.success || !Array.isArray(result.wards)) throw new Error((result && result.message) || 'Senarai wad tahun ' + selectedYear + ' tidak dapat dibaca.');
                             allCategories = ['KEMUDAHAN','ORIENTASI','LATIHAN','PRIVILEGING','ADVERSE EVENT','DATA KEHADIRAN KURSUS'];
                         } else {
                             allCategories = ['KEMUDAHAN','ORIENTASI','LATIHAN','PRIVILEGING','ADVERSE EVENT','DATA KEHADIRAN KURSUS'];
@@ -1524,7 +1524,7 @@
                     msg.classList.remove('hidden');
                     return;
                 }
-                if (year === '2027' && !HMI_2027_WARDS.includes(wardId)) {
+                if (!HMI_2027_WARDS.includes(wardId)) {
                     msg.textContent = 'Pilihan wad tidak sah. Sila tutup borang, muat semula halaman (Ctrl + F5), kemudian pilih nama wad sekali lagi.';
                     msg.classList.remove('hidden');
                     return;
