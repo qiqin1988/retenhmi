@@ -166,7 +166,7 @@
                         </div>
                     </div>
                     <div class="flex flex-col sm:flex-row gap-2 w-full xl:w-auto">
-                        <select id="yearFilter" class="filter-control" onchange="changeYear(this.value)" aria-label="Pilih tahun"><option value="2027">Tahun 2027</option><option value="2026">Tahun 2026</option><option value="2025">Tahun 2025</option><option value="2024">Tahun 2024</option><option value="2023">Tahun 2023</option></select>
+                        <input id="yearFilter" type="number" min="2023" max="9999" step="1" value="2027" class="filter-control" onchange="changeYear(this.value)" aria-label="Masukkan tahun pemantauan" title="Tahun pemantauan">
                         <select id="wardFilter" class="filter-control" onchange="selectWard(this.value)" aria-label="Pilih wad">
                             <option value="">Pilih Wad</option>
                         </select>
@@ -1457,16 +1457,12 @@
             ];
 
             const KEMUDAHAN_ITEMS = ['Ruang solat','Tempat wuduk','Penanda arah kiblat','Buku/Pamflet panduan ibadah','Sejadah/telekung/kain pelikat','Kit solat','Botol spray/debu tayammum','Pamflet/flyers/buku ibadah','Alquran/Yaasin','Takwim solat'];
-            function populateHmiYearOptions() {
-                const yearFilter = document.getElementById('yearFilter');
-                const entryYear = document.getElementById('entryYear');
-                const oldYear = selectedYear || '2027';
-                yearFilter.innerHTML = '<option value="2026">Tahun 2026</option><option value="2025">Tahun 2025</option><option value="2024">Tahun 2024</option><option value="2023">Tahun 2023</option>' + Array.from({length: 74}, (_, i) => 2027 + i).map(y => '<option value="' + y + '">Tahun ' + y + '</option>').join('');
-                entryYear.innerHTML = Array.from({length: 74}, (_, i) => 2027 + i).map(y => '<option value="' + y + '">' + y + '</option>').join('');
-                yearFilter.value = oldYear;
-                entryYear.value = String(Math.max(2027, Number(oldYear) || 2027));
+            function initialiseHmiYearFields() {
+                const current = selectedYear || '2027';
+                document.getElementById('yearFilter').value = current;
+                document.getElementById('entryYear').value = String(Math.max(2027, Number(current) || 2027));
             }
-            populateHmiYearOptions();
+            initialiseHmiYearFields();
 
             function buildKemudahanEntryItems() {
                 const host = document.getElementById('kemudahanStatusList');
@@ -1513,8 +1509,8 @@
                     return selected ? selected.value : '';
                 });
 
-                if (!/^20\\d{2}$/.test(year) || Number(year) < 2027 || Number(year) > 2100) {
-                    msg.textContent = 'Tahun Kemudahan mestilah antara 2027 hingga 2100.';
+                if (!/^\\d{4}$/.test(year) || Number(year) < 2027 || Number(year) > 9999) {
+                    msg.textContent = 'Tahun Kemudahan mestilah 2027 atau tahun selepasnya.';
                     msg.classList.remove('hidden');
                     return;
                 }
